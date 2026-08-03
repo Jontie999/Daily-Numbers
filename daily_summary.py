@@ -120,7 +120,6 @@ def _load_tides_from_file(path: str) -> list[tuple[str, str]]:
         raise DataError("Unable to find Belfast tide times")
     return events[:4]
 
-
 def main() -> str:
     parser = argparse.ArgumentParser(description="Generate BT19/Belfast daily numbers")
     parser.add_argument("--weather-json", help="Path to saved Open-Meteo payload")
@@ -130,7 +129,7 @@ def main() -> str:
     weather = _load_weather_from_file(args.weather_json) if args.weather_json else fetch_weather()
     tides = _load_tides_from_file(args.tide_html) if args.tide_html else fetch_tides()
 
-    # RETURN the message instead of printing it
+    # RETURN the final message instead of printing it
     return build_message(weather, tides)
 
 
@@ -138,3 +137,6 @@ if __name__ == "__main__":
     import sys
     # Send the returned message directly to Shortcuts
     sys.stdout.write(main())
+
+
+
