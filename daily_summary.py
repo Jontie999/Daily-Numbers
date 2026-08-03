@@ -121,7 +121,7 @@ def _load_tides_from_file(path: str) -> list[tuple[str, str]]:
     return events[:4]
 
 
-def main() -> None:
+def main() -> str:
     parser = argparse.ArgumentParser(description="Generate BT19/Belfast daily numbers")
     parser.add_argument("--weather-json", help="Path to saved Open-Meteo payload")
     parser.add_argument("--tide-html", help="Path to saved Belfast tide page HTML")
@@ -130,8 +130,11 @@ def main() -> None:
     weather = _load_weather_from_file(args.weather_json) if args.weather_json else fetch_weather()
     tides = _load_tides_from_file(args.tide_html) if args.tide_html else fetch_tides()
 
-    print(build_message(weather, tides))
+    # RETURN the message instead of printing it
+    return build_message(weather, tides)
 
 
 if __name__ == "__main__":
-    print(main())
+    import sys
+    # Send the returned message directly to Shortcuts
+    sys.stdout.write(main())
