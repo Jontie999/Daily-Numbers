@@ -1,7 +1,14 @@
 import unittest
 from pathlib import Path
 
-from daily_summary import _extract_tide_events, _load_tides_from_file, _load_weather_from_file, build_message
+from daily_summary import (
+    _degrees_to_cardinal,
+    _extract_tide_events,
+    _load_tides_from_file,
+    _load_weather_from_file,
+    _rain_description,
+    build_message,
+)
 
 
 class DailySummaryTests(unittest.TestCase):
@@ -13,13 +20,21 @@ class DailySummaryTests(unittest.TestCase):
         )
 
     def test_build_message(self):
-        weather = {"sunrise": "05:39", "temperature_c": 16.7, "wind_kts": 10.0, "raining": False}
+        weather = {
+            "sunrise": "05:39",
+            "temperature_c": 16.7,
+            "wind_kts": 10.0,
+            "wind_direction": "SW",
+            "raining": False,
+            "rain_description": "None",
+        }
         tides = [("high", "04:10"), ("low", "10:22")]
         message = build_message(weather, tides)
-        self.assertIn("BT19 Sunrise: 05:39", message)
-        self.assertIn("Air Temp Now: 16.7°C", message)
-        self.assertIn("Wind Now: 10.0 kts", message)
-        self.assertIn("Raining: No", message)
+        self.assertIn("05:39", message)
+        self.assertIn("16.7°C", message)
+        self.assertIn("10.0 kts SW", message)
+        self.assertIn("None", message)
+        self.assertIn("04:10", message)
 
     def test_loaders_with_fixtures(self):
         base = Path(__file__).parent / "fixtures"
@@ -28,7 +43,23 @@ class DailySummaryTests(unittest.TestCase):
 
         self.assertEqual(weather["sunrise"], "05:39")
         self.assertFalse(weather["raining"])
+        self.assertEqual(weather["wind_direction"], "SW")
+        self.assertEqual(weather["rain_description"], "None")
         self.assertEqual(tides[0], ("high", "04:10"))
+
+    def test_degrees_to_cardinal(self):
+        self.assertEqual(_degrees_to_cardinal(0), "N")
+        self.assertEqual(_degrees_to_cardinal(90), "E")
+        self.assertEqual(_degrees_to_cardinal(180), "S")
+        self.assertEqual(_degrees_to_cardinal(270), "W")
+        self.assertEqual(_degrees_to_cardinal(225), "SW")
+
+    def test_rain_description(self):
+        self.assertEqual(_rain_description(0.0), "None")
+        self.assertEqual(_rain_description(0.3), "Drizzle")
+        self.assertEqual(_rain_description(1.0), "Light Rain")
+        self.assertEqual(_rain_description(5.0), "Moderate Rain")
+        self.assertEqual(_rain_description(10.0), "Heavy Rain")
 
 
 if __name__ == "__main__":

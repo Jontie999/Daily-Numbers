@@ -5,7 +5,15 @@
   "current": {
     "temperature_2m": 16.7,
     "wind_speed_10m": 18.52,
+    "wind_direction_10m": 225,
     "precipitation": 0,
     "rain": 0
+  },
+  "hourly": {
+    "time": [
+      "2026-08-03T05:00", "2026-08-03T06:00", "2026-08-03T07:00",
+      "2026-08-03T08:00", "2026-08-03T12:00"
+    ],
+    "precipitation": [0.0, 0.0, 0.0, 1.0, 2.0]
   }
 }

@@ -18,6 +18,30 @@ BT19_LAT = 54.6658
 BT19_LON = -5.6948
 BELFAST_TIDE_URL = "https://www.tidetimes.org.uk/belfast-tide-times"
 
+# Cardinal direction labels (16-point compass, each covers 22.5°)
+_CARDINAL_DIRS = [
+    "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+    "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW",
+]
+
+
+def _degrees_to_cardinal(degrees: float) -> str:
+    idx = round(degrees / 22.5) % 16
+    return _CARDINAL_DIRS[idx]
+
+
+def _rain_description(max_precip_mm: float) -> str:
+    """Return a human-readable rain description from max hourly precipitation (mm)."""
+    if max_precip_mm <= 0.0:
+        return "None"
+    if max_precip_mm < 0.5:
+        return "Drizzle"
+    if max_precip_mm < 2.5:
+        return "Light Rain"
+    if max_precip_mm < 7.5:
+        return "Moderate Rain"
+    return "Heavy Rain"
+
 
 class DataError(RuntimeError):
     """Raised when external data cannot be parsed."""
@@ -37,14 +61,31 @@ def _format_time(value: str) -> str:
     return dt.strftime("%H:%M")
 
 
+def _extract_morning_precip(payload: dict) -> float:
+    """Return max hourly precipitation (mm) across the 05:00–07:00 window."""
+    try:
+        times = payload["hourly"]["time"]
+        precip = payload["hourly"]["precipitation"]
+    except KeyError:
+        return 0.0
+
+    values = [
+        p for t, p in zip(times, precip)
+        if "T05:" <= t[11:] <= "T07:59"
+    ]
+    return max(values, default=0.0)
+
+
 def fetch_weather() -> dict:
     params = urlencode(
         {
             "latitude": BT19_LAT,
             "longitude": BT19_LON,
             "daily": "sunrise",
-            "current": "temperature_2m,wind_speed_10m,precipitation,rain",
+            "current": "temperature_2m,wind_speed_10m,wind_direction_10m,precipitation,rain",
+            "hourly": "precipitation",
             "timezone": "Europe/London",
+            "forecast_days": 1,
         }
     )
     url = f"https://api.open-meteo.com/v1/forecast?{params}"
@@ -55,16 +96,21 @@ def fetch_weather() -> dict:
         current = payload["current"]
         temp_c = float(current["temperature_2m"])
         wind_kph = float(current["wind_speed_10m"])
+        wind_dir_deg = float(current.get("wind_direction_10m", 0.0))
         rain_mm = float(current.get("rain", 0.0))
         precipitation_mm = float(current.get("precipitation", 0.0))
     except (KeyError, IndexError, TypeError, ValueError) as exc:
         raise DataError("Unexpected weather data format") from exc
 
+    morning_precip = _extract_morning_precip(payload)
+
     return {
         "sunrise": _format_time(sunrise),
         "temperature_c": round(temp_c, 1),
         "wind_kts": round(wind_kph / 1.852, 1),
+        "wind_direction": _degrees_to_cardinal(wind_dir_deg),
         "raining": rain_mm > 0.0 or precipitation_mm > 0.0,
+        "rain_description": _rain_description(morning_precip),
     }
 
 
@@ -92,25 +138,44 @@ def fetch_tides() -> list[tuple[str, str]]:
 
 
 def build_message(weather: dict, tides: list[tuple[str, str]]) -> str:
-    tide_summary = ", ".join(f"{kind.title()} {time}" for kind, time in tides)
-    rain_summary = "Yes" if weather["raining"] else "No"
+    tide_lines = "\n".join(
+        f"  {'🌊' if kind == 'high' else '🏖️'}  {kind.title():4s}  {time}"
+        for kind, time in tides
+    )
+    rain_desc = weather.get("rain_description", "Yes" if weather["raining"] else "None")
+    wind_dir = weather.get("wind_direction", "")
+    wind_str = f"{weather['wind_kts']:.1f} kts {wind_dir}".strip()
+
     return (
-        f"BT19 Sunrise: {weather['sunrise']}\n"
-        f"Belfast Tides: {tide_summary}\n"
-        f"Air Temp Now: {weather['temperature_c']:.1f}°C\n"
-        f"Wind Now: {weather['wind_kts']:.1f} kts\n"
-        f"Raining: {rain_summary}"
+        "╔══════════════════════╗\n"
+        "║   🌅  BT19 DAILY     ║\n"
+        "╠══════════════════════╣\n"
+        f"║ 🌄 Sunrise   {weather['sunrise']:>8s} ║\n"
+        "╠══════════════════════╣\n"
+        f"║ 🌡️  Temp     {weather['temperature_c']:>6.1f}°C ║\n"
+        f"║ 💨 Wind    {wind_str:>10s} ║\n"
+        f"║ 🌧️  Rain    {rain_desc:>10s} ║\n"
+        "╠══════════════════════╣\n"
+        "║ 🌊 Tides (Belfast)   ║\n"
+        f"{tide_lines}\n"
+        "╚══════════════════════╝"
     )
 
 
 def _load_weather_from_file(path: str) -> dict:
     payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    current = payload["current"]
+    rain_mm = float(current.get("rain", 0.0))
+    precipitation_mm = float(current.get("precipitation", 0.0))
+    wind_dir_deg = float(current.get("wind_direction_10m", 0.0))
+    morning_precip = _extract_morning_precip(payload)
     return {
         "sunrise": _format_time(payload["daily"]["sunrise"][0]),
-        "temperature_c": round(float(payload["current"]["temperature_2m"]), 1),
-        "wind_kts": round(float(payload["current"]["wind_speed_10m"]) / 1.852, 1),
-        "raining": float(payload["current"].get("rain", 0.0)) > 0
-        or float(payload["current"].get("precipitation", 0.0)) > 0,
+        "temperature_c": round(float(current["temperature_2m"]), 1),
+        "wind_kts": round(float(current["wind_speed_10m"]) / 1.852, 1),
+        "wind_direction": _degrees_to_cardinal(wind_dir_deg),
+        "raining": rain_mm > 0 or precipitation_mm > 0,
+        "rain_description": _rain_description(morning_precip),
     }
 
 
