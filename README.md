@@ -6,7 +6,8 @@ Daily environment summary for a single iPhone-friendly message each morning:
 2. Tide times for Belfast
 3. Current outside air temperature
 4. Current wind speed in knots
-5. Whether it is raining
+5. Wind gusts in knots
+6. Whether it is raining
 
 ## Usage
 

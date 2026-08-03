@@ -5,6 +5,7 @@
   "current": {
     "temperature_2m": 16.7,
     "wind_speed_10m": 18.52,
+    "wind_gusts_10m": 27.78,
     "wind_direction_10m": 225,
     "precipitation": 0,
     "rain": 0

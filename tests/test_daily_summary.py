@@ -24,6 +24,7 @@ class DailySummaryTests(unittest.TestCase):
             "sunrise": "05:39",
             "temperature_c": 16.7,
             "wind_kts": 10.0,
+            "wind_gusts_kts": 15.0,
             "wind_direction": "SW",
             "raining": False,
             "rain_description": "None",
@@ -33,8 +34,14 @@ class DailySummaryTests(unittest.TestCase):
         self.assertIn("05:39", message)
         self.assertIn("16.7°C", message)
         self.assertIn("10.0 kts SW", message)
+        self.assertIn("15.0 kts", message)
         self.assertIn("None", message)
         self.assertIn("04:10", message)
+        lines = message.splitlines()
+        body_lines = [line for line in lines[1:-1] if line.startswith("║")]
+        self.assertTrue(body_lines)
+        self.assertTrue(all(line.endswith("║") for line in body_lines))
+        self.assertEqual(len({len(line) for line in lines}), 1)
 
     def test_loaders_with_fixtures(self):
         base = Path(__file__).parent / "fixtures"
@@ -44,6 +51,7 @@ class DailySummaryTests(unittest.TestCase):
         self.assertEqual(weather["sunrise"], "05:39")
         self.assertFalse(weather["raining"])
         self.assertEqual(weather["wind_direction"], "SW")
+        self.assertEqual(weather["wind_gusts_kts"], 15.0)
         self.assertEqual(weather["rain_description"], "None")
         self.assertEqual(tides[0], ("high", "04:10"))
 

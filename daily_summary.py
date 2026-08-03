@@ -82,7 +82,7 @@ def fetch_weather() -> dict:
             "latitude": BT19_LAT,
             "longitude": BT19_LON,
             "daily": "sunrise",
-            "current": "temperature_2m,wind_speed_10m,wind_direction_10m,precipitation,rain",
+            "current": "temperature_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation,rain",
             "hourly": "precipitation",
             "timezone": "Europe/London",
             "forecast_days": 1,
@@ -96,6 +96,7 @@ def fetch_weather() -> dict:
         current = payload["current"]
         temp_c = float(current["temperature_2m"])
         wind_kph = float(current["wind_speed_10m"])
+        wind_gusts_kph = float(current.get("wind_gusts_10m", wind_kph))
         wind_dir_deg = float(current.get("wind_direction_10m", 0.0))
         rain_mm = float(current.get("rain", 0.0))
         precipitation_mm = float(current.get("precipitation", 0.0))
@@ -108,6 +109,7 @@ def fetch_weather() -> dict:
         "sunrise": _format_time(sunrise),
         "temperature_c": round(temp_c, 1),
         "wind_kts": round(wind_kph / 1.852, 1),
+        "wind_gusts_kts": round(wind_gusts_kph / 1.852, 1),
         "wind_direction": _degrees_to_cardinal(wind_dir_deg),
         "raining": rain_mm > 0.0 or precipitation_mm > 0.0,
         "rain_description": _rain_description(morning_precip),
@@ -138,27 +140,49 @@ def fetch_tides() -> list[tuple[str, str]]:
 
 
 def build_message(weather: dict, tides: list[tuple[str, str]]) -> str:
-    tide_lines = "\n".join(
-        f"  {'🌊' if kind == 'high' else '🏖️'}  {kind.title():4s}  {time}"
-        for kind, time in tides
-    )
     rain_desc = weather.get("rain_description", "Yes" if weather["raining"] else "None")
     wind_dir = weather.get("wind_direction", "")
     wind_str = f"{weather['wind_kts']:.1f} kts {wind_dir}".strip()
+    gusts_str = f"{weather.get('wind_gusts_kts', weather['wind_kts']):.1f} kts"
+    content_lines = [
+        "🌅  BT19 DAILY",
+        f"🌄 Sunrise   {weather['sunrise']}",
+        f"🌡️  Temp     {weather['temperature_c']:.1f}°C",
+        f"💨 Wind     {wind_str}",
+        f"💨 Gusts    {gusts_str}",
+        f"🌧️  Rain     {rain_desc}",
+        "🌊 Tides (Belfast)",
+    ]
+    content_lines.extend(
+        f"{'🌊' if kind == 'high' else '🏖️'}  {kind.title():4s}  {time}"
+        for kind, time in tides
+    )
+    width = max(len(line) for line in content_lines)
 
-    return (
-        "╔══════════════════════╗\n"
-        "║   🌅  BT19 DAILY     ║\n"
-        "╠══════════════════════╣\n"
-        f"║ 🌄 Sunrise   {weather['sunrise']:>8s} ║\n"
-        "╠══════════════════════╣\n"
-        f"║ 🌡️  Temp     {weather['temperature_c']:>6.1f}°C ║\n"
-        f"║ 💨 Wind    {wind_str:>10s} ║\n"
-        f"║ 🌧️  Rain    {rain_desc:>10s} ║\n"
-        "╠══════════════════════╣\n"
-        "║ 🌊 Tides (Belfast)   ║\n"
-        f"{tide_lines}\n"
-        "╚══════════════════════╝"
+    def boxed(line: str) -> str:
+        return f"║ {line:<{width}} ║"
+
+    divider = f"╠{'═' * (width + 2)}╣"
+
+    return "\n".join(
+        [
+            f"╔{'═' * (width + 2)}╗",
+            boxed("🌅  BT19 DAILY"),
+            divider,
+            boxed(f"🌄 Sunrise   {weather['sunrise']}"),
+            divider,
+            boxed(f"🌡️  Temp     {weather['temperature_c']:.1f}°C"),
+            boxed(f"💨 Wind     {wind_str}"),
+            boxed(f"💨 Gusts    {gusts_str}"),
+            boxed(f"🌧️  Rain     {rain_desc}"),
+            divider,
+            boxed("🌊 Tides (Belfast)"),
+            *[
+                boxed(f"{'🌊' if kind == 'high' else '🏖️'}  {kind.title():4s}  {time}")
+                for kind, time in tides
+            ],
+            f"╚{'═' * (width + 2)}╝",
+        ]
     )
 
 
@@ -173,6 +197,7 @@ def _load_weather_from_file(path: str) -> dict:
         "sunrise": _format_time(payload["daily"]["sunrise"][0]),
         "temperature_c": round(float(current["temperature_2m"]), 1),
         "wind_kts": round(float(current["wind_speed_10m"]) / 1.852, 1),
+        "wind_gusts_kts": round(float(current.get("wind_gusts_10m", current["wind_speed_10m"])) / 1.852, 1),
         "wind_direction": _degrees_to_cardinal(wind_dir_deg),
         "raining": rain_mm > 0 or precipitation_mm > 0,
         "rain_description": _rain_description(morning_precip),
@@ -202,4 +227,3 @@ if __name__ == "__main__":
     import sys
     # Send the returned message directly to Shortcuts
     sys.stdout.write(main())
-
