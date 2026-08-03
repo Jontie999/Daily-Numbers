@@ -1,0 +1,11 @@
+{
+  "daily": {
+    "sunrise": ["2026-08-03T05:39"]
+  },
+  "current": {
+    "temperature_2m": 16.7,
+    "wind_speed_10m": 18.52,
+    "precipitation": 0,
+    "rain": 0
+  }
+}
