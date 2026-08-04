@@ -37,10 +37,27 @@ class DailySummaryTests(unittest.TestCase):
         self.assertIn("15.0 kts", message)
         self.assertIn("None", message)
         self.assertIn("04:10", message)
+        self.assertIn("🚢 Cruise   None", message)
         lines = message.splitlines()
         body_lines = [line for line in lines[1:-1] if line.startswith("║")]
         self.assertTrue(body_lines)
         self.assertTrue(all(line.endswith("║") for line in body_lines))
+        self.assertEqual(len({len(line) for line in lines}), 1)
+
+    def test_build_message_with_cruise_ship(self):
+        weather = {
+            "sunrise": "05:39",
+            "temperature_c": 16.7,
+            "wind_kts": 10.0,
+            "wind_gusts_kts": 15.0,
+            "wind_direction": "SW",
+            "raining": False,
+            "rain_description": "None",
+        }
+        tides = [("high", "04:10"), ("low", "10:22")]
+        message = build_message(weather, tides, cruise_ship="Queen Mary 2")
+        self.assertIn("🚢 Cruise   Queen Mary 2", message)
+        lines = message.splitlines()
         self.assertEqual(len({len(line) for line in lines}), 1)
 
     def test_loaders_with_fixtures(self):
