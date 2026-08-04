@@ -1,12 +1,3 @@
-on:
-  schedule:
-    - cron: "0 8 * * *"
-  workflow_dispatch:
-
-
-
-
-
 name: Daily Summary
 
 on:
@@ -34,4 +25,3 @@ jobs:
       - name: Run daily summary script
         run: |
           python daily_summary.py
-
