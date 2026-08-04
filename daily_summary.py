@@ -139,7 +139,7 @@ def fetch_tides() -> list[tuple[str, str]]:
     return events[:4]
 
 
-def build_message(weather: dict, tides: list[tuple[str, str]]) -> str:
+def build_message(weather: dict, tides: list[tuple[str, str]], cruise_ship: str = "None") -> str:
     rain_desc = weather.get("rain_description", "Yes" if weather["raining"] else "None")
     wind_dir = weather.get("wind_direction", "")
     wind_str = f"{weather['wind_kts']:.1f} kts {wind_dir}".strip()
@@ -151,6 +151,7 @@ def build_message(weather: dict, tides: list[tuple[str, str]]) -> str:
         f"💨 Wind     {wind_str}",
         f"💨 Gusts    {gusts_str}",
         f"🌧️  Rain     {rain_desc}",
+        f"🚢 Cruise   {cruise_ship}",
         "🌊 Tides (Belfast)",
     ]
     content_lines.extend(
@@ -175,6 +176,7 @@ def build_message(weather: dict, tides: list[tuple[str, str]]) -> str:
             boxed(f"💨 Wind     {wind_str}"),
             boxed(f"💨 Gusts    {gusts_str}"),
             boxed(f"🌧️  Rain     {rain_desc}"),
+            boxed(f"🚢 Cruise   {cruise_ship}"),
             divider,
             boxed("🌊 Tides (Belfast)"),
             *[
