@@ -9,9 +9,27 @@ Daily environment summary for a single iPhone-friendly message each morning:
 5. Wind gusts in knots
 6. Whether it is raining
 
-## Usage
+---
+
+## Quick start — access on any phone
+
+The easiest way to use this on any iPhone or Android is to **deploy it once to Render** (free) and then **add a home-screen icon** on your phone.
+
+### Deploy to Render (one click)
+
+1. Go to [render.com](https://render.com) and sign in with your GitHub account.
+2. Click **New → Web Service** and select the `Daily-Numbers` repository.
+3. Render detects the `render.yaml` file automatically — just click **Create Web Service**.
+4. After ~2 minutes you'll have a public URL such as `https://daily-numbers.onrender.com`.
+
+Add that URL to your phone's home screen (see steps below) and you'll have an app icon that opens the live daily numbers.
+
+---
+
+## Usage (local / command line)
 
 ```bash
+pip install -r requirements.txt
 python3 daily_summary.py
 ```
 
@@ -32,10 +50,10 @@ python3 daily_summary.py \
 `app.py` is a small Flask web app that serves the daily summary as a page you can
 pin to your phone's home screen — just like a native app.
 
-### 1. Install the extra dependency
+### 1. Install dependencies
 
 ```bash
-pip install flask
+pip install -r requirements.txt
 ```
 
 ### 2. Run the server
@@ -69,8 +87,8 @@ Because the app fetches live data it needs a server. Two easy free options:
 
 | Option | Notes |
 |---|---|
+| **[Render](https://render.com)** | Connect this GitHub repo — the included `render.yaml` configures everything automatically. Render deploys on every push. Free tier available. |
 | **[PythonAnywhere](https://www.pythonanywhere.com)** | Free tier supports one Flask web app. Upload `daily_summary.py` and `app.py`, set the WSGI entry point to `app.py`, and you get a permanent public URL. |
-| **[Render](https://render.com)** | Connect this GitHub repo, set the start command to `python app.py`, and Render deploys automatically on every push. Free tier available. |
 
 Once deployed, bookmark the public URL, then follow step 3 above to pin it to
 your home screen.
