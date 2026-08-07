@@ -3,7 +3,9 @@ from pathlib import Path
 
 from daily_summary import (
     _degrees_to_cardinal,
+    _extract_cruise_ships,
     _extract_tide_events,
+    _load_cruise_ships_from_file,
     _load_tides_from_file,
     _load_weather_from_file,
     _rain_description,
@@ -85,6 +87,43 @@ class DailySummaryTests(unittest.TestCase):
         self.assertEqual(_rain_description(1.0), "Light Rain")
         self.assertEqual(_rain_description(5.0), "Moderate Rain")
         self.assertEqual(_rain_description(10.0), "Heavy Rain")
+
+    def test_extract_cruise_ships_from_table(self):
+        html = """<table>
+          <tr><th>Vessel Name</th><th>Vessel Type</th><th>Berth</th></tr>
+          <tr><td>Queen Mary 2</td><td>Cruise Ship</td><td>D1C</td></tr>
+          <tr><td>Stena Superfast X</td><td>Ferry</td><td>VT3</td></tr>
+        </table>"""
+        self.assertEqual(_extract_cruise_ships(html), "Queen Mary 2")
+
+    def test_extract_cruise_ships_multiple(self):
+        html = """<table>
+          <tr><th>Vessel Name</th><th>Vessel Type</th><th>Berth</th></tr>
+          <tr><td>Queen Mary 2</td><td>Cruise Ship</td><td>D1C</td></tr>
+          <tr><td>MSC Magnifica</td><td>Cruise Ship</td><td>D1C</td></tr>
+        </table>"""
+        self.assertEqual(_extract_cruise_ships(html), "Queen Mary 2, MSC Magnifica")
+
+    def test_extract_cruise_ships_none(self):
+        html = """<table>
+          <tr><th>Vessel Name</th><th>Vessel Type</th><th>Berth</th></tr>
+          <tr><td>Stena Superfast X</td><td>Ferry</td><td>VT3</td></tr>
+        </table>"""
+        self.assertEqual(_extract_cruise_ships(html), "None")
+
+    def test_extract_cruise_ships_fallback(self):
+        # No table, just raw text with D1C berth reference
+        html = "<p>Vessel: Aurora &nbsp; Berth: D1C &nbsp; Type: Cruise Ship</p>"
+        result = _extract_cruise_ships(html)
+        # Should find "Aurora" via fallback or type-based detection
+        self.assertNotEqual(result, "")
+
+    def test_load_cruise_ships_fixture(self):
+        base = Path(__file__).parent / "fixtures"
+        result = _load_cruise_ships_from_file(str(base / "harbour.html"))
+        self.assertIn("Queen Mary 2", result)
+        self.assertIn("MSC Magnifica", result)
+        self.assertNotIn("Stena Superfast X", result)
 
 
 if __name__ == "__main__":

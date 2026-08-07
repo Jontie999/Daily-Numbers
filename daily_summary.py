@@ -17,6 +17,10 @@ from urllib.request import urlopen
 BT19_LAT = 54.6658
 BT19_LON = -5.6948
 BELFAST_TIDE_URL = "https://www.tidetimes.org.uk/belfast-tide-times"
+BELFAST_HARBOUR_URL = "https://www.belfast-harbour.co.uk/port-info/harbour-movements/"
+
+# Berths used by cruise ships in Belfast Harbour
+_CRUISE_BERTHS = {"d1c", "d1", "d3", "d4"}
 
 # Cardinal direction labels (16-point compass, each covers 22.5°)
 _CARDINAL_DIRS = [
@@ -139,6 +143,112 @@ def fetch_tides() -> list[tuple[str, str]]:
     return events[:4]
 
 
+def _extract_cruise_ships(html: str) -> str:
+    """Return cruise ship names visible in the Belfast Harbour movements HTML.
+
+    Looks for table rows where the berth column contains a known cruise berth
+    (e.g. D1C) or the vessel type contains "cruise".  Falls back to a simple
+    keyword scan so that the function still works if the page layout changes.
+
+    Returns a comma-separated ship list, or "None" when no cruise ships are found.
+    """
+    from html.parser import HTMLParser
+
+    class _TableParser(HTMLParser):
+        """Collect <tr> cell text from the harbour movements table."""
+
+        def __init__(self) -> None:
+            super().__init__()
+            self._rows: list[list[str]] = []
+            self._current_row: list[str] | None = None
+            self._current_cell: list[str] | None = None
+            self._in_cell = False
+
+        def handle_starttag(self, tag: str, attrs: list) -> None:
+            if tag == "tr":
+                self._current_row = []
+            elif tag in {"td", "th"} and self._current_row is not None:
+                self._current_cell = []
+                self._in_cell = True
+
+        def handle_endtag(self, tag: str) -> None:
+            if tag in {"td", "th"} and self._current_cell is not None:
+                self._current_row.append(" ".join(self._current_cell).strip())
+                self._current_cell = None
+                self._in_cell = False
+            elif tag == "tr" and self._current_row is not None:
+                if self._current_row:
+                    self._rows.append(self._current_row)
+                self._current_row = None
+
+        def handle_data(self, data: str) -> None:
+            if self._in_cell and self._current_cell is not None:
+                self._current_cell.append(data.strip())
+
+    parser = _TableParser()
+    parser.feed(html)
+
+    ships: list[str] = []
+
+    if parser._rows:
+        # Identify header row to find column indices
+        header_row = parser._rows[0]
+        headers = [h.lower() for h in header_row]
+
+        def _col(names: list[str]) -> int:
+            for name in names:
+                for i, h in enumerate(headers):
+                    if name in h:
+                        return i
+            return -1
+
+        name_col = _col(["vessel", "ship", "name"])
+        berth_col = _col(["berth"])
+        type_col = _col(["type", "vessel type", "ship type"])
+
+        for row in parser._rows[1:]:
+            if not row:
+                continue
+            vessel_name = row[name_col].strip() if name_col >= 0 and name_col < len(row) else ""
+            berth = row[berth_col].strip().lower() if berth_col >= 0 and berth_col < len(row) else ""
+            vessel_type = row[type_col].strip().lower() if type_col >= 0 and type_col < len(row) else ""
+
+            if berth in _CRUISE_BERTHS or "cruise" in vessel_type:
+                if vessel_name and vessel_name not in ships:
+                    ships.append(vessel_name)
+
+    if not ships:
+        # Fallback: scan raw text for patterns like "D1C   <ShipName>" or "Cruise Ship <ShipName>"
+        berth_pattern = re.compile(
+            r"\bD1C\b[^\n<]{0,60}?([A-Z][A-Za-z0-9 .'-]{3,})",
+            re.IGNORECASE,
+        )
+        for m in berth_pattern.finditer(html):
+            name = m.group(1).strip()
+            if name and name not in ships:
+                ships.append(name)
+
+        cruise_pattern = re.compile(
+            r"cruise\s+ship\s*[:\-]?\s*([A-Z][A-Za-z0-9 .'-]{3,})",
+            re.IGNORECASE,
+        )
+        for m in cruise_pattern.finditer(html):
+            name = m.group(1).strip()
+            if name and name not in ships:
+                ships.append(name)
+
+    return ", ".join(ships) if ships else "None"
+
+
+def fetch_cruise_ships() -> str:
+    """Fetch and return cruise ship names from Belfast Harbour movements page."""
+    try:
+        html = _fetch_text(BELFAST_HARBOUR_URL)
+        return _extract_cruise_ships(html)
+    except Exception:  # noqa: BLE001
+        return "None"
+
+
 def build_message(weather: dict, tides: list[tuple[str, str]], cruise_ship: str = "None") -> str:
     rain_desc = weather.get("rain_description", "Yes" if weather["raining"] else "None")
     wind_dir = weather.get("wind_direction", "")
@@ -212,17 +322,24 @@ def _load_tides_from_file(path: str) -> list[tuple[str, str]]:
         raise DataError("Unable to find Belfast tide times")
     return events[:4]
 
+def _load_cruise_ships_from_file(path: str) -> str:
+    """Return cruise ship names parsed from a saved harbour movements HTML file."""
+    return _extract_cruise_ships(Path(path).read_text(encoding="utf-8"))
+
+
 def main() -> str:
     parser = argparse.ArgumentParser(description="Generate BT19/Belfast daily numbers")
     parser.add_argument("--weather-json", help="Path to saved Open-Meteo payload")
     parser.add_argument("--tide-html", help="Path to saved Belfast tide page HTML")
+    parser.add_argument("--cruise-html", help="Path to saved Belfast Harbour movements HTML")
     args = parser.parse_args()
 
     weather = _load_weather_from_file(args.weather_json) if args.weather_json else fetch_weather()
     tides = _load_tides_from_file(args.tide_html) if args.tide_html else fetch_tides()
+    cruise_ship = _load_cruise_ships_from_file(args.cruise_html) if args.cruise_html else fetch_cruise_ships()
 
     # RETURN the final message instead of printing it
-    return build_message(weather, tides)
+    return build_message(weather, tides, cruise_ship=cruise_ship)
 
 
 if __name__ == "__main__":
