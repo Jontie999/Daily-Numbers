@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from flask import Flask, render_template_string
 
-from daily_summary import build_message, fetch_tides, fetch_weather
+from daily_summary import build_message, fetch_cruise_ships, fetch_tides, fetch_weather
 
 app = Flask(__name__)
 
@@ -78,7 +78,8 @@ def index():
     try:
         weather = fetch_weather()
         tides = fetch_tides()
-        message = build_message(weather, tides)
+        cruise_ship = fetch_cruise_ships()
+        message = build_message(weather, tides, cruise_ship=cruise_ship)
         return render_template_string(_HTML, message=message, error=None)
     except Exception as exc:  # noqa: BLE001
         return render_template_string(_HTML, message=None, error=str(exc)), 500
