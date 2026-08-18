@@ -83,8 +83,8 @@ def _extract_morning_precip(payload: dict) -> float:
 def fetch_weather() -> dict:
     params = urlencode(
         {
-            "latitude": BT19_LAT,
-            "longitude": BT19_LON,
+            "latitude": _LAT,
+            "longitude": _LON,
             "daily": "sunrise",
             "current": "temperature_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation,rain",
             "hourly": "precipitation",
@@ -255,7 +255,7 @@ def build_message(weather: dict, tides: list[tuple[str, str]], cruise_ship: str 
     wind_str = f"{weather['wind_kts']:.1f} kts {wind_dir}".strip()
     gusts_str = f"{weather.get('wind_gusts_kts', weather['wind_kts']):.1f} kts"
     content_lines = [
-        "🌅  BT19 DAILY",
+        "🌅   DAILY",
         f"🌄 Sunrise   {weather['sunrise']}",
         f"🌡️  Temp     {weather['temperature_c']:.1f}°C",
         f"💨 Wind     {wind_str}",
@@ -390,7 +390,7 @@ def build_html(message, weather=None, tides=None, cruise=None):
     return f"""
     <html>
     <head>
-        <title>BT19 Daily Numbers</title>
+        <title>PJ's Daily Daily Numbers</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
