@@ -327,6 +327,39 @@ def _load_cruise_ships_from_file(path: str) -> str:
     return _extract_cruise_ships(Path(path).read_text(encoding="utf-8"))
 
 
+def build_html(message: str) -> str:
+    """Wrap the plain-text summary in minimal HTML for GitHub Pages."""
+    now = datetime.now().strftime("%Y-%m-%d %H:%M UTC")
+    escaped = (
+        message
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+    return (
+        "<!DOCTYPE html>\n"
+        "<html lang=\"en\">\n"
+        "<head>\n"
+        "  <meta charset=\"UTF-8\">\n"
+        "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+        "  <title>BT19 Daily Numbers</title>\n"
+        "  <style>\n"
+        "    body { font-family: monospace; background: #0d1117; color: #c9d1d9;"
+        " display: flex; flex-direction: column; align-items: center;"
+        " padding: 2rem; }\n"
+        "    pre { background: #161b22; border: 1px solid #30363d;"
+        " border-radius: 8px; padding: 1.5rem; white-space: pre; }\n"
+        "    .updated { color: #8b949e; font-size: 0.85rem; margin-top: 1rem; }\n"
+        "  </style>\n"
+        "</head>\n"
+        "<body>\n"
+        f"<pre>{escaped}</pre>\n"
+        f"<p class=\"updated\">Last updated: {now}</p>\n"
+        "</body>\n"
+        "</html>\n"
+    )
+
+
 def main() -> str:
     parser = argparse.ArgumentParser(description="Generate BT19/Belfast daily numbers")
     parser.add_argument("--weather-json", help="Path to saved Open-Meteo payload")
@@ -338,8 +371,14 @@ def main() -> str:
     tides = _load_tides_from_file(args.tide_html) if args.tide_html else fetch_tides()
     cruise_ship = _load_cruise_ships_from_file(args.cruise_html) if args.cruise_html else fetch_cruise_ships()
 
+    message = build_message(weather, tides, cruise_ship=cruise_ship)
+
+    html_path = Path(__file__).parent / "docs" / "index.html"
+    html_path.parent.mkdir(parents=True, exist_ok=True)
+    html_path.write_text(build_html(message), encoding="utf-8")
+
     # RETURN the final message instead of printing it
-    return build_message(weather, tides, cruise_ship=cruise_ship)
+    return message
 
 
 if __name__ == "__main__":
