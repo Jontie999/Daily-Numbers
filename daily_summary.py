@@ -390,7 +390,7 @@ def build_html(message, weather=None, tides=None, cruise=None):
     return f"""
     <html>
     <head>
-        <title>PJ's Daily Daily Numbers</title>
+        <title>BT19 Daily Numbers</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
