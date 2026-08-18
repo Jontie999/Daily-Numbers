@@ -1,105 +1,99 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BT19 Daily Numbers</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-                   Helvetica, Arial, sans-serif;
-      font-size: 18px;
-      line-height: 1.6;
-      background: #e8f4f8;
-      color: #1a2b3c;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem 1rem;
-    }
+    <html>
+    <head>
+        <title>BT19 Daily Numbers</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+                margin: 0;
+                padding: 20px;
+                background: #eef2f7;
+                color: #333;
+            }
 
-    header {
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
+            .container {
+                max-width: 800px;
+                margin: auto;
+            }
 
-    header h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #0a6ea8;
-      letter-spacing: 0.05em;
-    }
+            h1 {
+                text-align: center;
+                font-size: 32px;
+                margin-bottom: 20px;
+                color: #1a73e8;
+            }
 
-    header p {
-      font-size: 0.9rem;
-      color: #5a7a8a;
-      margin-top: 0.25rem;
-    }
+            .card {
+                background: white;
+                padding: 20px;
+                margin-bottom: 20px;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            }
 
-    main {
-      width: 100%;
-      max-width: 540px;
-    }
+            .card-title {
+                font-size: 22px;
+                margin-bottom: 10px;
+                font-weight: 600;
+            }
 
-    .card {
-      background: #ffffff;
-      border: 1px solid #c4dce8;
-      border-radius: 12px;
-      padding: 1.5rem 1.75rem;
-      box-shadow: 0 4px 16px rgba(10, 110, 168, 0.08);
-    }
+            .card-body {
+                font-size: 18px;
+                line-height: 1.6;
+            }
 
-    pre {
-      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo,
-                   monospace;
-      font-size: 1rem;
-      line-height: 1.55;
-      color: #1a2b3c;
-      white-space: pre;
-      overflow-x: auto;
-    }
+            .summary {
+                background: #fff8e1;
+                border-left: 6px solid #f4c430;
+                padding: 20px;
+                border-radius: 10px;
+                margin-bottom: 25px;
+                font-size: 18px;
+            }
 
-    footer {
-      margin-top: 1.25rem;
-      font-size: 0.8rem;
-      color: #7a9aaa;
-      text-align: center;
-    }
+            footer {
+                text-align: center;
+                margin-top: 30px;
+                font-size: 14px;
+                color: #777;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
 
-    @media (max-width: 600px) {
-      header h1  { font-size: 1.5rem; }
-      pre        { font-size: 0.85rem; }
-      .card      { padding: 1rem 1.1rem; }
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>🌅 BT19 Daily Numbers</h1>
-    <p>Belfast · Local Conditions</p>
-  </header>
-  <main>
-    <div class="card">
-      <pre>╔══════════════════════╗
-║ 🌅  BT19 DAILY        ║
-╠══════════════════════╣
-║ 🌄 Sunrise   06:04    ║
-╠══════════════════════╣
-║ 🌡️  Temp     17.9°C  ║
-║ 💨 Wind     9.1 kts W ║
-║ 💨 Gusts    19.2 kts  ║
-║ 🌧️  Rain     None    ║
-║ 🚢 Cruise   None      ║
-╠══════════════════════╣
-║ 🌊 Tides (Belfast)    ║
-║ 🌊  High  15:58       ║
-║ 🏖️  Low   21:47      ║
-╚══════════════════════╝</pre>
-    </div>
-  </main>
-  <footer>Last updated: 2026-08-18 13:42 UTC</footer>
-</body>
-</html>
+            <h1>BT19 Daily Numbers</h1>
+
+            <div class="summary">
+                ╔══════════════════════╗<br>║ 🌅  BT19 DAILY        ║<br>╠══════════════════════╣<br>║ 🌄 Sunrise   06:04    ║<br>╠══════════════════════╣<br>║ 🌡️  Temp     17.6°C  ║<br>║ 💨 Wind     9.1 kts W ║<br>║ 💨 Gusts    19.2 kts  ║<br>║ 🌧️  Rain     None    ║<br>║ 🚢 Cruise   None      ║<br>╠══════════════════════╣<br>║ 🌊 Tides (Belfast)    ║<br>║ 🌊  High  15:58       ║<br>║ 🏖️  Low   21:47      ║<br>╚══════════════════════╝
+            </div>
+
+            
+            <div class="card">
+                <div class="card-title">🌤️ Weather</div>
+                <div class="card-body">
+                    <div><strong>Sunrise:</strong> 06:04</div>
+                    <div><strong>Temperature:</strong> 17.6°C</div>
+                    <div><strong>Wind:</strong> 9.1 kts W</div>
+                    <div><strong>Gusts:</strong> 19.2 kts</div>
+                    <div><strong>Rain:</strong> None</div>
+                </div>
+            </div>
+        
+            <div class="card"><div class="card-title">🌊 Tides</div><div class="card-body"><div>🌊⬆️ <strong>High Tide:</strong> 15:58</div><div>🌊⬇️ <strong>Low Tide:</strong> 21:47</div></div></div>
+            
+            <div class="card">
+                <div class="card-title">🚢 Cruise Ship</div>
+                <div class="card-body">
+                    <div><strong>Name:</strong> None</div>
+                </div>
+            </div>
+        
+
+            <footer>Updated automatically by GitHub Actions</footer>
+        </div>
+    </body>
+    </html>
+    
