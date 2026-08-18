@@ -466,30 +466,19 @@ def build_html(message, weather=None, tides=None, cruise=None):
 
 
 
-def main() -> str:
-    parser = argparse.ArgumentParser(description="Generate BT19/Belfast daily numbers")
-    parser.add_argument("--weather-json", help="Path to saved Open-Meteo payload")
-    parser.add_argument("--tide-html", help="Path to saved Belfast tide page HTML")
-    parser.add_argument("--cruise-html", help="Path to saved Belfast Harbour movements HTML")
-    args = parser.parse_args()
+def main():
+    weather = get_weather()
+    tides = get_tides()
+    cruise_ship = get_cruise_ship()
 
-    weather = _load_weather_from_file(args.weather_json) if args.weather_json else fetch_weather()
-    tides = _load_tides_from_file(args.tide_html) if args.tide_html else fetch_tides()
-    cruise_ship = _load_cruise_ships_from_file(args.cruise_html) if args.cruise_html else fetch_cruise_ships()
+    message = build_message(weather, tides, cruise_ship)
 
-    message = build_message(weather, tides, cruise_ship=cruise_ship)
+    html_path = Path("docs/index.html")
+    html_path.write_text(
+        build_html(message, weather, tides, cruise_ship),
+        encoding="utf-8"
+    )
 
-    html_path = Path(__file__).parent / "docs" / "index.html"
-    html_path.parent.mkdir(parents=True, exist_ok=True)
-    html_path.write_text(build_html(message, weather, tides, cruise_ship), encoding="utf-8")
-
-
-    # RETURN the final message instead of printing it
     return message
 
-
-if __name__ == "__main__":
-    import sys
-    # Send the returned message directly to Shortcuts
-    sys.stdout.write(main())
     
