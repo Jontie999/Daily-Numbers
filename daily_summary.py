@@ -385,31 +385,4 @@ if __name__ == "__main__":
     import sys
     # Send the returned message directly to Shortcuts
     sys.stdout.write(main())
-def save_to_html(summary):
-    html = f"""
-    <html>
-    <head>
-        <title>BT19 Daily Numbers</title>
-        <meta charset="UTF-8">
-        <style>
-            body {{
-                font-family: Arial, sans-serif;
-                margin: 40px;
-                line-height: 1.6;
-            }}
-            pre {{
-                white-space: pre-wrap;
-                font-size: 1.1rem;
-            }}
-        </style>
-    </head>
-    <body>
-        <h1>BT19 Daily Numbers</h1>
-        <pre>{summary}</pre>
-    </body>
-    </html>
-    """
-    with open("docs/index.html", "w", encoding="utf-8") as f:
-        f.write(html)
-summary = build_message(weather, tides, cruise_ships)
-save_to_html(summary)
+    
