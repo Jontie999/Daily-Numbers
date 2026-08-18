@@ -455,9 +455,6 @@ def build_html(message, weather=None, tides=None, cruise=None):
 
             <h1>BT19 Daily Numbers</h1>
 
-            <div class="summary">
-                {message_html}
-            </div>
 
             {weather_html}
             {tides_html}
