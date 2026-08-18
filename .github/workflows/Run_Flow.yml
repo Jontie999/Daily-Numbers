@@ -1,12 +1,16 @@
 name: Run_Flow
 
 on:
-   workflow_dispatch:
-     
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
 
 jobs:
   run-script:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repo
@@ -24,3 +28,12 @@ jobs:
       - name: Run daily summary script
         run: |
           python daily_summary.py
+
+      - name: Commit docs/index.html
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/index.html
+          git diff --cached --quiet || git commit -m "Update daily summary [skip ci]"
+          git push
+
