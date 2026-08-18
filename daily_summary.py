@@ -326,109 +326,87 @@ def _load_cruise_ships_from_file(path: str) -> str:
     """Return cruise ship names parsed from a saved harbour movements HTML file."""
     return _extract_cruise_ships(Path(path).read_text(encoding="utf-8"))
 
+def build_html(message):
+    return f"""
+    <html>
+    <head>
+        <title>BT19 Daily Numbers</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+                margin: 0;
+                padding: 20px;
+                background: #f7f9fc;
+                color: #333;
+                line-height: 1.6;
+            }}
 
-def build_html(message: str) -> str:
-    """Wrap the plain-text summary in a styled HTML page for GitHub Pages."""
-    now = datetime.now().strftime("%Y-%m-%d %H:%M UTC")
-    escaped = (
-        message
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-    )
-    return (
-        "<!DOCTYPE html>\n"
-        "<html lang=\"en\">\n"
-        "<head>\n"
-        "  <meta charset=\"UTF-8\">\n"
-        "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-        "  <title>BT19 Daily Numbers</title>\n"
-        "  <style>\n"
-        "    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }\n"
-        "\n"
-        "    body {\n"
-        "      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,\n"
-        "                   Helvetica, Arial, sans-serif;\n"
-        "      font-size: 18px;\n"
-        "      line-height: 1.6;\n"
-        "      background: #e8f4f8;\n"
-        "      color: #1a2b3c;\n"
-        "      min-height: 100vh;\n"
-        "      display: flex;\n"
-        "      flex-direction: column;\n"
-        "      align-items: center;\n"
-        "      padding: 2rem 1rem;\n"
-        "    }\n"
-        "\n"
-        "    header {\n"
-        "      text-align: center;\n"
-        "      margin-bottom: 1.5rem;\n"
-        "    }\n"
-        "\n"
-        "    header h1 {\n"
-        "      font-size: 2rem;\n"
-        "      font-weight: 700;\n"
-        "      color: #0a6ea8;\n"
-        "      letter-spacing: 0.05em;\n"
-        "    }\n"
-        "\n"
-        "    header p {\n"
-        "      font-size: 0.9rem;\n"
-        "      color: #5a7a8a;\n"
-        "      margin-top: 0.25rem;\n"
-        "    }\n"
-        "\n"
-        "    main {\n"
-        "      width: 100%;\n"
-        "      max-width: 540px;\n"
-        "    }\n"
-        "\n"
-        "    .card {\n"
-        "      background: #ffffff;\n"
-        "      border: 1px solid #c4dce8;\n"
-        "      border-radius: 12px;\n"
-        "      padding: 1.5rem 1.75rem;\n"
-        "      box-shadow: 0 4px 16px rgba(10, 110, 168, 0.08);\n"
-        "    }\n"
-        "\n"
-        "    pre {\n"
-        "      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo,\n"
-        "                   monospace;\n"
-        "      font-size: 1rem;\n"
-        "      line-height: 1.55;\n"
-        "      color: #1a2b3c;\n"
-        "      white-space: pre;\n"
-        "      overflow-x: auto;\n"
-        "    }\n"
-        "\n"
-        "    footer {\n"
-        "      margin-top: 1.25rem;\n"
-        "      font-size: 0.8rem;\n"
-        "      color: #7a9aaa;\n"
-        "      text-align: center;\n"
-        "    }\n"
-        "\n"
-        "    @media (max-width: 600px) {\n"
-        "      header h1  { font-size: 1.5rem; }\n"
-        "      pre        { font-size: 0.85rem; }\n"
-        "      .card      { padding: 1rem 1.1rem; }\n"
-        "    }\n"
-        "  </style>\n"
-        "</head>\n"
-        "<body>\n"
-        "  <header>\n"
-        "    <h1>🌅 BT19 Daily Numbers</h1>\n"
-        "    <p>Belfast · Local Conditions</p>\n"
-        "  </header>\n"
-        "  <main>\n"
-        "    <div class=\"card\">\n"
-        f"      <pre>{escaped}</pre>\n"
-        "    </div>\n"
-        "  </main>\n"
-        f"  <footer>Last updated: {now}</footer>\n"
-        "</body>\n"
-        "</html>\n"
-    )
+            .container {{
+                max-width: 700px;
+                margin: auto;
+                background: white;
+                padding: 25px;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            }}
+
+            h1 {{
+                font-size: 28px;
+                margin-bottom: 10px;
+                text-align: center;
+                color: #1a73e8;
+            }}
+
+            .section {{
+                margin-top: 25px;
+            }}
+
+            .section h2 {{
+                font-size: 20px;
+                margin-bottom: 10px;
+                color: #444;
+                border-bottom: 2px solid #e5e5e5;
+                padding-bottom: 6px;
+            }}
+
+            .item {{
+                margin-bottom: 8px;
+                font-size: 17px;
+            }}
+
+            .emoji {{
+                font-size: 20px;
+                margin-right: 6px;
+            }}
+
+            footer {{
+                margin-top: 30px;
+                text-align: center;
+                font-size: 14px;
+                color: #777;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>BT19 Daily Numbers</h1>
+
+            <div class="section">
+                <h2>Summary</h2>
+                <div class="item">{message.replace("\n", "<br>")}</div>
+            </div>
+
+            <footer>
+                Updated automatically by GitHub Actions
+            </footer>
+        </div>
+    </body>
+    </html>
+    """
+
+
 
 
 def main() -> str:
