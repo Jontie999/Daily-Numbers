@@ -326,7 +326,61 @@ def _load_cruise_ships_from_file(path: str) -> str:
     """Return cruise ship names parsed from a saved harbour movements HTML file."""
     return _extract_cruise_ships(Path(path).read_text(encoding="utf-8"))
 
-def build_html(message):
+def build_html(message, weather=None, tides=None, cruise=None):
+    # Simple icon mapping
+    weather_icon = {
+        "sunny": "☀️",
+        "clear": "☀️",
+        "cloudy": "☁️",
+        "partly cloudy": "⛅",
+        "rain": "🌧️",
+        "showers": "🌦️",
+        "wind": "💨",
+        "snow": "❄️"
+    }
+
+    tide_icon = {
+        "High": "🌊⬆️",
+        "Low": "🌊⬇️"
+    }
+
+    cruise_icon = "🚢"
+
+    # Build sections
+    weather_html = ""
+    if weather:
+        icon = weather_icon.get(weather.get("condition", "").lower(), "🌤️")
+        weather_html = f"""
+            <div class="card">
+                <div class="card-title">{icon} Weather</div>
+                <div class="card-body">
+                    <div><strong>Condition:</strong> {weather.get("condition")}</div>
+                    <div><strong>Temperature:</strong> {weather.get("temperature")}°C</div>
+                    <div><strong>Wind:</strong> {weather.get("wind")}</div>
+                </div>
+            </div>
+        """
+
+    tides_html = ""
+    if tides:
+        tides_html = '<div class="card"><div class="card-title">🌊 Tides</div><div class="card-body">'
+        for t in tides:
+            icon = tide_icon.get(t["type"], "🌊")
+            tides_html += f"<div>{icon} <strong>{t['type']} Tide:</strong> {t['time']}</div>"
+        tides_html += "</div></div>"
+
+    cruise_html = ""
+    if cruise:
+        cruise_html = f"""
+            <div class="card">
+                <div class="card-title">{cruise_icon} Cruise Ship</div>
+                <div class="card-body">
+                    <div><strong>Name:</strong> {cruise.get("name")}</div>
+                    <div><strong>Arrival:</strong> {cruise.get("arrival")}</div>
+                </div>
+            </div>
+        """
+
     return f"""
     <html>
     <head>
@@ -338,52 +392,53 @@ def build_html(message):
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
                 margin: 0;
                 padding: 20px;
-                background: #f7f9fc;
+                background: #eef2f7;
                 color: #333;
-                line-height: 1.6;
             }}
 
             .container {{
-                max-width: 700px;
+                max-width: 800px;
                 margin: auto;
+            }}
+
+            h1 {{
+                text-align: center;
+                font-size: 32px;
+                margin-bottom: 20px;
+                color: #1a73e8;
+            }}
+
+            .card {{
                 background: white;
-                padding: 25px;
+                padding: 20px;
+                margin-bottom: 20px;
                 border-radius: 12px;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             }}
 
-            h1 {{
-                font-size: 28px;
+            .card-title {{
+                font-size: 22px;
                 margin-bottom: 10px;
-                text-align: center;
-                color: #1a73e8;
+                font-weight: 600;
             }}
 
-            .section {{
-                margin-top: 25px;
+            .card-body {{
+                font-size: 18px;
+                line-height: 1.6;
             }}
 
-            .section h2 {{
-                font-size: 20px;
-                margin-bottom: 10px;
-                color: #444;
-                border-bottom: 2px solid #e5e5e5;
-                padding-bottom: 6px;
-            }}
-
-            .item {{
-                margin-bottom: 8px;
-                font-size: 17px;
-            }}
-
-            .emoji {{
-                font-size: 20px;
-                margin-right: 6px;
+            .summary {{
+                background: #fff8e1;
+                border-left: 6px solid #f4c430;
+                padding: 20px;
+                border-radius: 10px;
+                margin-bottom: 25px;
+                font-size: 18px;
             }}
 
             footer {{
-                margin-top: 30px;
                 text-align: center;
+                margin-top: 30px;
                 font-size: 14px;
                 color: #777;
             }}
@@ -391,16 +446,18 @@ def build_html(message):
     </head>
     <body>
         <div class="container">
+
             <h1>BT19 Daily Numbers</h1>
 
-            <div class="section">
-                <h2>Summary</h2>
-                <div class="item">{message.replace("\n", "<br>")}</div>
+            <div class="summary">
+                {message.replace("\n", "<br>")}
             </div>
 
-            <footer>
-                Updated automatically by GitHub Actions
-            </footer>
+            {weather_html}
+            {tides_html}
+            {cruise_html}
+
+            <footer>Updated automatically by GitHub Actions</footer>
         </div>
     </body>
     </html>
@@ -424,7 +481,8 @@ def main() -> str:
 
     html_path = Path(__file__).parent / "docs" / "index.html"
     html_path.parent.mkdir(parents=True, exist_ok=True)
-    html_path.write_text(build_html(message), encoding="utf-8")
+    html_path.write_text(build_html(message, weather, tides, cruise_ship), encoding="utf-8")
+
 
     # RETURN the final message instead of printing it
     return message
