@@ -327,6 +327,8 @@ def _load_cruise_ships_from_file(path: str) -> str:
     return _extract_cruise_ships(Path(path).read_text(encoding="utf-8"))
 
 def build_html(message, weather=None, tides=None, cruise=None):
+    message_html = message.replace("\n", "<br>")
+
     # Simple icon mapping
     weather_icon = {
         "sunny": "☀️",
@@ -349,14 +351,18 @@ def build_html(message, weather=None, tides=None, cruise=None):
     # Build sections
     weather_html = ""
     if weather:
-        icon = weather_icon.get(weather.get("condition", "").lower(), "🌤️")
+        icon = "🌧️" if weather.get("raining") else "🌤️"
+        wind_str = f"{weather.get('wind_kts', 0.0):.1f} kts {weather.get('wind_direction', '')}".strip()
+        gusts_str = f"{weather.get('wind_gusts_kts', weather.get('wind_kts', 0.0)):.1f} kts"
         weather_html = f"""
             <div class="card">
                 <div class="card-title">{icon} Weather</div>
                 <div class="card-body">
-                    <div><strong>Condition:</strong> {weather.get("condition")}</div>
-                    <div><strong>Temperature:</strong> {weather.get("temperature")}°C</div>
-                    <div><strong>Wind:</strong> {weather.get("wind")}</div>
+                    <div><strong>Sunrise:</strong> {weather.get("sunrise")}</div>
+                    <div><strong>Temperature:</strong> {weather.get("temperature_c"):.1f}°C</div>
+                    <div><strong>Wind:</strong> {wind_str}</div>
+                    <div><strong>Gusts:</strong> {gusts_str}</div>
+                    <div><strong>Rain:</strong> {weather.get("rain_description")}</div>
                 </div>
             </div>
         """
@@ -364,9 +370,10 @@ def build_html(message, weather=None, tides=None, cruise=None):
     tides_html = ""
     if tides:
         tides_html = '<div class="card"><div class="card-title">🌊 Tides</div><div class="card-body">'
-        for t in tides:
-            icon = tide_icon.get(t["type"], "🌊")
-            tides_html += f"<div>{icon} <strong>{t['type']} Tide:</strong> {t['time']}</div>"
+        for kind, time in tides:
+            label = kind.title()
+            icon = tide_icon.get(label, "🌊")
+            tides_html += f"<div>{icon} <strong>{label} Tide:</strong> {time}</div>"
         tides_html += "</div></div>"
 
     cruise_html = ""
@@ -375,8 +382,7 @@ def build_html(message, weather=None, tides=None, cruise=None):
             <div class="card">
                 <div class="card-title">{cruise_icon} Cruise Ship</div>
                 <div class="card-body">
-                    <div><strong>Name:</strong> {cruise.get("name")}</div>
-                    <div><strong>Arrival:</strong> {cruise.get("arrival")}</div>
+                    <div><strong>Name:</strong> {cruise}</div>
                 </div>
             </div>
         """
@@ -450,7 +456,7 @@ def build_html(message, weather=None, tides=None, cruise=None):
             <h1>BT19 Daily Numbers</h1>
 
             <div class="summary">
-                {message.replace("\n", "<br>")}
+                {message_html}
             </div>
 
             {weather_html}
@@ -467,9 +473,9 @@ def build_html(message, weather=None, tides=None, cruise=None):
 
 
 def main():
-    weather = get_weather()
-    tides = get_tides()
-    cruise_ship = get_cruise_ship()
+    weather = fetch_weather()
+    tides = fetch_tides()
+    cruise_ship = fetch_cruise_ships()
 
     message = build_message(weather, tides, cruise_ship)
 
@@ -480,5 +486,9 @@ def main():
     )
 
     return message
+
+
+if __name__ == "__main__":
+    print(main())
 
     

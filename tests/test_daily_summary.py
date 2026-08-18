@@ -1,4 +1,6 @@
 import unittest
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 from pathlib import Path
 
 from daily_summary import (
@@ -9,7 +11,9 @@ from daily_summary import (
     _load_tides_from_file,
     _load_weather_from_file,
     _rain_description,
+    build_html,
     build_message,
+    main,
 )
 
 
@@ -61,6 +65,60 @@ class DailySummaryTests(unittest.TestCase):
         self.assertIn("🚢 Cruise   Queen Mary 2", message)
         lines = message.splitlines()
         self.assertEqual(len({len(line) for line in lines}), 1)
+
+    def test_build_html_with_script_data_shapes(self):
+        weather = {
+            "sunrise": "05:39",
+            "temperature_c": 16.7,
+            "wind_kts": 10.0,
+            "wind_gusts_kts": 15.0,
+            "wind_direction": "SW",
+            "raining": False,
+            "rain_description": "None",
+        }
+        html = build_html(
+            "Line 1\nLine 2",
+            weather=weather,
+            tides=[("high", "04:10"), ("low", "10:22")],
+            cruise="Queen Mary 2",
+        )
+
+        self.assertIn("Line 1<br>Line 2", html)
+        self.assertIn("<strong>Temperature:</strong> 16.7°C", html)
+        self.assertIn("<strong>Wind:</strong> 10.0 kts SW", html)
+        self.assertIn("<strong>High Tide:</strong> 04:10", html)
+        self.assertIn("<strong>Name:</strong> Queen Mary 2", html)
+
+    def test_main_writes_html_output(self):
+        weather = {
+            "sunrise": "05:39",
+            "temperature_c": 16.7,
+            "wind_kts": 10.0,
+            "wind_gusts_kts": 15.0,
+            "wind_direction": "SW",
+            "raining": False,
+            "rain_description": "None",
+        }
+        tides = [("high", "04:10"), ("low", "10:22")]
+
+        with TemporaryDirectory() as tmpdir:
+            docs_dir = Path(tmpdir) / "docs"
+            docs_dir.mkdir()
+            output_path = docs_dir / "index.html"
+
+            with (
+                patch("daily_summary.fetch_weather", return_value=weather),
+                patch("daily_summary.fetch_tides", return_value=tides),
+                patch("daily_summary.fetch_cruise_ships", return_value="Queen Mary 2"),
+                patch("daily_summary.Path", side_effect=lambda value: Path(tmpdir) / value),
+            ):
+                message = main()
+
+            self.assertTrue(output_path.exists())
+            html = output_path.read_text(encoding="utf-8")
+            self.assertIn("BT19 Daily Numbers", html)
+            self.assertIn("Queen Mary 2", html)
+            self.assertIn(message.replace("\n", "<br>"), html)
 
     def test_loaders_with_fixtures(self):
         base = Path(__file__).parent / "fixtures"
