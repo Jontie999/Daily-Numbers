@@ -1,12 +1,15 @@
 {
   "daily": {
-    "sunrise": ["2026-08-03T05:39"]
+    "sunrise": ["2026-08-03T05:39"],
+    "sunset": ["2026-08-03T21:07"]
   },
   "current": {
+    "time": "2026-08-03T06:15",
     "temperature_2m": 16.7,
     "wind_speed_10m": 18.52,
     "wind_gusts_10m": 27.78,
     "wind_direction_10m": 225,
+    "weather_code": 1,
     "precipitation": 0,
     "rain": 0
   },
