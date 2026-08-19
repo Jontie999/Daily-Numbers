@@ -17,9 +17,10 @@ def index():
         vessel_movements = fetch_vessel_movements(weather.get("collected_at"))
         message = build_message(weather, tides, vessel_movements=vessel_movements)
         return build_html(message, weather, tides, vessel_movements=vessel_movements)
-    except Exception as exc:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         return (
-            f"<html><head><title>PJ's Daily Numbers</title></head><body><pre>{exc}</pre></body></html>",
+            "<html><head><title>PJ's Daily Numbers</title></head>"
+            "<body><pre>Unable to load the latest daily numbers right now.</pre></body></html>",
             500,
         )
 
