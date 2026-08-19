@@ -532,7 +532,8 @@ def build_message(
                 boxed(
                     f"{'🌊' if tide['kind'] == 'high' else '🏖️'} {str(tide['kind']).title()} "
                     f"{tide['time']}"
-                    f"{f' {float(tide['height_m']):.1f}m' if tide.get('height_m') is not None else ''}"
+                    (f" {float(tide['height_m']):.1f}m" if tide.get('height_m') is not None else "")
+
                 )
                 for tide in tides
             ],
