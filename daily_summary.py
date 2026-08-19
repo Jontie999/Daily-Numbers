@@ -14,8 +14,8 @@ from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
-BT19_LAT = 54.6658
-BT19_LON = -5.6948
+_LAT = 54.6658
+_LON = -5.6948
 BELFAST_TIDE_URL = "https://www.tidetimes.org.uk/belfast-tide-times"
 BELFAST_HARBOUR_URL = "https://www.belfast-harbour.co.uk/port-info/harbour-movements/"
 
