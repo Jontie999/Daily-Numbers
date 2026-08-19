@@ -367,8 +367,8 @@ def build_html(message, weather=None, tides=None, cruise=None):
     if tides:
         tides_html = '<div class="card"><div class="card-title">🌊 Tides</div><div class="card-body">'
         for tide_type, tide_time in tides:
-    icon = tide_icon.get(tide_type, "🌊")
-    tides_html += f"<div>{icon} <strong>{tide_type} Tide:</strong> {tide_time}</div>"
+            icon = tide_icon.get(tide_type, "🌊")
+            tides_html += f"<div>{icon} <strong>{tide_type} Tide:</strong> {tide_time}</div>"
 
 
     # Cruise card
