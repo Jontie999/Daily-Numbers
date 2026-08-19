@@ -595,14 +595,24 @@ def build_html(message, weather=None, tides=None, cruise=None, vessel_movements=
             for tide in tides
         ]
     )
-    tide_rows = "".join(
-        (
-            "<li>"
-            f"<strong>{escape(str(tide['kind']).title())}</strong> "
-            f"{escape(str(tide['time']))}"
-            f"{escape(f' · {float(tide['height_m']):.1f}m') if tide.get('height_m') is not None else ''}"
-            "</li>"
-        )
+    
+    
+    # ----- FIXED TIDE BLOCK -----
+tide_rows = "".join(
+    (
+        "<li>"
+        f"<strong>{escape(str(tide['kind']).title())}</strong> "
+        f"{escape(str(tide['time']))}"
+        f"{(' · ' + format(float(tide['height_m']), '.1f') + 'm') if tide.get('height_m') is not None else ''}"
+        "</li>"
+    )
+    for tide in tides
+)
+
+
+
+
+    
         for tide in tides
     )
     movement_rows = "".join(
