@@ -530,10 +530,9 @@ def build_message(
             boxed(f"🌊 Tides (Belfast) {tide_curve}".rstrip()),
             *[
                 boxed(
-                    f"{'🌊' if tide['kind'] == 'high' else '🏖️'} {str(tide['kind']).title()} "
+                    f"{'🌊' if tide['kind'] == 'high' else '🏖️'} {tide['kind'].title()} "
                     f"{tide['time']}"
-              (f" {float(tide['height_m']):.1f}m" if tide.get('height_m') is not None else "")
-      
+                    + (f" {float(tide['height_m']):.1f}m" if tide.get('height_m') is not None else "")
 
                 )
                 for tide in tides
@@ -597,17 +596,16 @@ def build_html(message, weather=None, tides=None, cruise=None, vessel_movements=
     )
     
     
-    # ----- FIXED TIDE BLOCK -----
-tide_rows = "".join(
-    (
-        "<li>"
-        f"<strong>{escape(str(tide['kind']).title())}</strong> "
-        f"{escape(str(tide['time']))}"
-        f"{(' · ' + format(float(tide['height_m']), '.1f') + 'm') if tide.get('height_m') is not None else ''}"
-        "</li>"
+    tide_rows = "".join(
+        (
+            "<li>"
+            f"<strong>{escape(str(tide['kind']).title())}</strong> "
+            f"{escape(str(tide['time']))}"
+            f"{(' · ' + format(float(tide['height_m']), '.1f') + 'm') if tide.get('height_m') is not None else ''}"
+            "</li>"
+        )
+        for tide in tides
     )
-    for tide in tides
-)
 
     movement_rows = "".join(
         (
