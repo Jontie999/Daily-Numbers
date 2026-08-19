@@ -10,6 +10,7 @@ import argparse
 import json
 import re
 from datetime import datetime
+from html import escape
 from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import urlopen
@@ -327,6 +328,7 @@ def _load_cruise_ships_from_file(path: str) -> str:
     return _extract_cruise_ships(Path(path).read_text(encoding="utf-8"))
 
 def build_html(message, weather=None, tides=None, cruise=None):
+    message_html = escape(message).replace("\n", "<br>")
     weather_icon = {
         "sunny": "☀️",
         "clear": "☀️",
@@ -348,16 +350,19 @@ def build_html(message, weather=None, tides=None, cruise=None):
     # Weather card
     weather_html = ""
     if weather:
-        icon = weather_icon.get(weather.get("condition", "").lower(), "🌤️")
+        rain_desc = weather.get("rain_description", "Yes" if weather.get("raining") else "None")
+        icon = weather_icon.get("rain" if weather.get("raining") else "clear", "🌤️")
+        temperature_c = float(weather.get("temperature_c", 0.0))
+        wind_kts = float(weather.get("wind_kts", 0.0))
+        wind_direction = escape(str(weather.get("wind_direction", "")))
+        rain_desc = escape(str(rain_desc))
         weather_html = f"""
             <div class="card">
                 <div class="card-title">{icon} Weather</div>
                 <div class="card-body">
-                    <div><strong>Condition:</strong> {weather.get("condition")}</div>
-                    <div><strong>Temperature:</strong> 
-                        <span class="temp-badge">{weather.get("temperature")}°C</span>
-                    </div>
-                    <div><strong>Wind:</strong> {weather.get("wind")}</div>
+                    <div><strong>Temperature:</strong> {temperature_c:.1f}°C</div>
+                    <div><strong>Wind:</strong> {wind_kts:.1f} kts {wind_direction}</div>
+                    <div><strong>Rain:</strong> {rain_desc}</div>
                 </div>
             </div>
         """
@@ -367,8 +372,13 @@ def build_html(message, weather=None, tides=None, cruise=None):
     if tides:
         tides_html = '<div class="card"><div class="card-title">🌊 Tides</div><div class="card-body">'
         for tide_type, tide_time in tides:
-    icon = tide_icon.get(tide_type, "🌊")
-    tides_html += f"<div>{icon} <strong>{tide_type} Tide:</strong> {tide_time}</div>"
+            label = tide_type.title()
+            icon = tide_icon.get(label, "🌊")
+            tides_html += (
+                f"<div>{icon} <strong>{escape(label)} Tide:</strong> "
+                f"{escape(str(tide_time))}</div>"
+            )
+        tides_html += "</div></div>"
 
 
     # Cruise card
@@ -378,8 +388,7 @@ def build_html(message, weather=None, tides=None, cruise=None):
             <div class="card">
                 <div class="card-title">{cruise_icon} Cruise Ship</div>
                 <div class="card-body">
-                    <div><strong>Name:</strong> {cruise.get("name")}</div>
-                    <div><strong>Arrival:</strong> {cruise.get("arrival")}</div>
+                    <div><strong>Name:</strong> {escape(str(cruise))}</div>
                 </div>
             </div>
         """
@@ -450,6 +459,11 @@ def build_html(message, weather=None, tides=None, cruise=None):
         <div class="container">
 
             <h1>BT19 Daily Numbers</h1>
+
+            <div class="card">
+                <div class="card-title">📋 Summary</div>
+                <div class="card-body">{message_html}</div>
+            </div>
 
             {weather_html}
             {tides_html}
