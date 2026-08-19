@@ -609,12 +609,6 @@ tide_rows = "".join(
     for tide in tides
 )
 
-
-
-
-    
-        for tide in tides
-    )
     movement_rows = "".join(
         (
             "<li>"
