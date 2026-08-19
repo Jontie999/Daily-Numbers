@@ -1,9 +1,7 @@
 name: Run_Flow
 
 on:
-  schedule:
-    - cron: "0 5 * * *"
-  workflow_dispatch:
+   workflow_dispatch:
 
 jobs:
   run-script:
