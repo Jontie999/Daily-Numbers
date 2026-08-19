@@ -532,7 +532,7 @@ def build_message(
                 boxed(
                     f"{'🌊' if tide['kind'] == 'high' else '🏖️'} {str(tide['kind']).title()} "
                     f"{tide['time']}"
-                    f"{f' {float(tide['height_m']):.1f}m' if tide.get('height_m') is not None else ''}"
+                    f"{(' ' + format(float(tide['height_m']), '.1f') + 'm') if tide.get('height_m') is not None else ''}"
                 )
                 for tide in tides
             ],
@@ -598,7 +598,7 @@ def build_html(message, weather=None, tides=None, cruise=None, vessel_movements=
             "<li>"
             f"<strong>{escape(str(tide['kind']).title())}</strong> "
             f"{escape(str(tide['time']))}"
-            f"{escape(f' · {float(tide['height_m']):.1f}m') if tide.get('height_m') is not None else ''}"
+            f"{escape(' · ' + format(float(tide['height_m']), '.1f') + 'm') if tide.get('height_m') is not None else ''}"
             "</li>"
         )
         for tide in tides
