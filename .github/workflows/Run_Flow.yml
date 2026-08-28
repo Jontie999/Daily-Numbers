@@ -1,6 +1,8 @@
 name: Run_Flow
 
 on:
+   schedule:
+     - cron: "0 6 * * *"
    workflow_dispatch:
 
 jobs:
@@ -34,4 +36,3 @@ jobs:
           git add docs/index.html
           git diff --cached --quiet || git commit -m "Update daily summary [skip ci]"
           git push
-

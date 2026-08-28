@@ -13,7 +13,7 @@ from datetime import datetime
 from html import escape
 from pathlib import Path
 from urllib.parse import urlencode
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 _LAT = 54.6658
 _LON = -5.6948
@@ -115,7 +115,8 @@ class DataError(RuntimeError):
 
 
 def _fetch_text(url: str) -> str:
-    with urlopen(url, timeout=20) as response:  # noqa: S310
+    request = Request(url, headers={"User-Agent": "Daily-Numbers/1.0"})
+    with urlopen(request, timeout=20) as response:  # noqa: S310
         return response.read().decode("utf-8", errors="replace")
 
 
@@ -617,6 +618,7 @@ def build_html(message, weather=None, tides=None, cruise=None, vessel_movements=
         )
         for movement in vessel_movements
     ) or "<li>None in the current window</li>"
+    summary_lines = "<br>\n".join(escape(line) for line in str(message).splitlines())
     return f"""
     <html>
     <head>
@@ -747,7 +749,7 @@ def build_html(message, weather=None, tides=None, cruise=None, vessel_movements=
 
             <div class="card">
                 <div class="card-title">📋 Summary</div>
-                <pre class="summary-box">{escape(message)}</pre>
+                <div class="summary-box" role="region" aria-label="Daily summary">{summary_lines}</div>
             </div>
 
             <div class="grid">
@@ -781,14 +783,26 @@ def build_html(message, weather=None, tides=None, cruise=None, vessel_movements=
 
 
 
-def main():
-    weather = fetch_weather()
-    tides = fetch_tides()
-    vessel_movements = fetch_vessel_movements(weather.get("collected_at"))
+def main(
+    weather_path: str | None = None,
+    tide_path: str | None = None,
+    harbour_path: str | None = None,
+    output_path: str = "docs/index.html",
+):
+    weather = _load_weather_from_file(weather_path) if weather_path else fetch_weather()
+    tides = _load_tides_from_file(tide_path) if tide_path else fetch_tides()
+    if harbour_path:
+        vessel_movements = _extract_vessel_movements(
+            Path(harbour_path).read_text(encoding="utf-8"),
+            reference_time=weather.get("collected_at"),
+        )
+    else:
+        vessel_movements = fetch_vessel_movements(weather.get("collected_at"))
 
     message = build_message(weather, tides, vessel_movements=vessel_movements)
 
-    html_path = Path("docs/index.html")
+    html_path = Path(output_path)
+    html_path.parent.mkdir(parents=True, exist_ok=True)
     html_path.write_text(
         build_html(message, weather, tides, vessel_movements=vessel_movements),
         encoding="utf-8"
@@ -798,6 +812,10 @@ def main():
 
 
 if __name__ == "__main__":
-    print(main())
-
-    
+    parser = argparse.ArgumentParser(description="Generate the BT19 daily summary.")
+    parser.add_argument("--weather-json", help="Use a saved Open-Meteo response.")
+    parser.add_argument("--tide-html", help="Use a saved Belfast tide page.")
+    parser.add_argument("--harbour-html", help="Use a saved Belfast Harbour movements page.")
+    parser.add_argument("--output", default="docs/index.html", help="HTML output path.")
+    args = parser.parse_args()
+    print(main(args.weather_json, args.tide_html, args.harbour_html, args.output))

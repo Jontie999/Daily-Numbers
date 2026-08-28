@@ -3,7 +3,7 @@
 Daily environment summary for a single iPhone-friendly message each morning:
 
 1. Sunrise time for BT19 (UK)
-2. Tide times for Belfast
+2. Belfast high/low tide times and heights
 3. Current outside air temperature
 4. Current wind speed in knots
 5. Wind gusts in knots
@@ -19,7 +19,7 @@ The easiest way to use this on any iPhone or Android is to **deploy it once to R
 
 1. Go to [render.com](https://render.com) and sign in with your GitHub account.
 2. Click **New → Web Service** and select the `Daily-Numbers` repository.
-3. Render detects the `render.yaml` file automatically — just click **Create Web Service**.
+3. Use `gunicorn app:app` as the start command, then click **Create Web Service**.
 4. After ~2 minutes you'll have a public URL such as `https://daily-numbers.onrender.com`.
 
 Add that URL to your phone's home screen (see steps below) and you'll have an app icon that opens the live daily numbers.
@@ -40,15 +40,22 @@ The script prints a compact multi-line message that can be sent by your preferre
 ```bash
 python3 daily_summary.py \
   --weather-json tests/fixtures/weather.json \
-  --tide-html tests/fixtures/tides.html
+  --tide-html tests/fixtures/tides.html \
+  --harbour-html tests/fixtures/harbour.html \
+  --output /tmp/daily-numbers.html
 ```
+
+The command fetches live weather, Belfast tide heights, and Belfast Harbour
+movements by default. The saved-file options above are only for offline
+verification.
 
 ---
 
 ## Running as a web app (shortcut on Safari / Android)
 
-`app.py` is a small Flask web app that serves the daily summary as a page you can
-pin to your phone's home screen — just like a native app.
+`app.py` is a small Flask web app that fetches fresh data on every page request
+and serves the daily summary as a page you can pin to your phone's home screen —
+just like a native app.
 
 ### 1. Install dependencies
 
@@ -87,8 +94,16 @@ Because the app fetches live data it needs a server. Two easy free options:
 
 | Option | Notes |
 |---|---|
-| **[Render](https://render.com)** | Connect this GitHub repo — the included `render.yaml` configures everything automatically. Render deploys on every push. Free tier available. |
+| **[Render](https://render.com)** | Connect this GitHub repo and use `gunicorn app:app` as the start command. Render deploys on every push. Free tier available. |
 | **[PythonAnywhere](https://www.pythonanywhere.com)** | Free tier supports one Flask web app. Upload `daily_summary.py` and `app.py`, set the WSGI entry point to `app.py`, and you get a permanent public URL. |
 
 Once deployed, bookmark the public URL, then follow step 3 above to pin it to
 your home screen.
+
+### GitHub Actions / GitHub Pages
+
+The **Run_Flow** action runs automatically once a day at 06:00 UTC and commits a
+fresh `docs/index.html`. It can also be started immediately from **Actions →
+Run_Flow → Run workflow**. Refresh the published Pages URL after the workflow
+finishes; simply refreshing it does not fetch new data itself. GitHub Pages must
+be enabled for the repository with `docs/` as its source.
