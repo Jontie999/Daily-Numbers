@@ -114,11 +114,13 @@ class DailySummaryTests(unittest.TestCase):
         )
 
         self.assertIn("PJ's Daily Numbers", html)
-        self.assertIn("Line 1\nLine 2", html)
+        self.assertIn("Line 1<br>\nLine 2", html)
         self.assertIn("Data collected at 06:15", html)
         self.assertIn("Sunrise / Sunset", html)
         self.assertIn("Tide curve", html)
         self.assertIn("Queen Mary 2", html)
+        self.assertNotIn("<pre", html)
+        self.assertIn("4.1m", html)
 
     def test_main_writes_html_output(self):
         weather = {
@@ -156,7 +158,8 @@ class DailySummaryTests(unittest.TestCase):
             html = output_path.read_text(encoding="utf-8")
             self.assertIn("PJ's Daily Numbers", html)
             self.assertIn("Queen Mary 2", html)
-            self.assertIn(message, html)
+            self.assertIn("📋 Summary<br>", html)
+            self.assertIn("╚═════════════════════════════════════════════╝", html)
 
     def test_loaders_with_fixtures(self):
         base = Path(__file__).parent / "fixtures"
@@ -172,6 +175,21 @@ class DailySummaryTests(unittest.TestCase):
         self.assertEqual(weather["rain_description"], "None")
         self.assertEqual(tides[0]["kind"], "high")
         self.assertEqual(tides[0]["time"], "04:10")
+        self.assertEqual(tides[0]["height_m"], 4.1)
+
+    def test_main_offline_inputs(self):
+        base = Path(__file__).parent / "fixtures"
+        with TemporaryDirectory() as tmpdir:
+            output = Path(tmpdir) / "index.html"
+            message = main(
+                str(base / "weather.json"),
+                str(base / "tides.html"),
+                str(base / "harbour.html"),
+                str(output),
+            )
+            self.assertTrue(output.exists())
+            self.assertIn("4.1m", message)
+            self.assertIn("Stena Superfast X", message)
 
     def test_degrees_to_cardinal(self):
         self.assertEqual(_degrees_to_cardinal(0), "N")
