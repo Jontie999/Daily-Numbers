@@ -323,49 +323,91 @@ def fetch_vessel_movements(reference_time=None):
         return []
 
 # Summary builder
-def build_message(weather, tides, cruise_ship=None, vessel_movements=None):
-    rain_desc = weather.get("rain_description", "Yes" if weather.get("raining") else "None")
-    wind_dir = weather.get("wind_direction", "")
-    wind_arrow = _direction_to_arrow(wind_dir)
-    wind_str = f"{weather['wind_kts']:.1f} kts {wind_arrow} {wind_dir}".strip()
-    gusts_str = f"{weather.get('wind_gusts_kts', weather['wind_kts']):.1f} kts"
-
+def build_html(message, weather=None, tides=None, cruise=None, vessel_movements=None):
+    weather = weather or {}
+    tides = tides or []
     vessel_movements = vessel_movements or []
-    if cruise_ship and not vessel_movements and cruise_ship != "None":
-        vessel_movements = [{"name": cruise_ship, "type": "Cruise Ship", "berth": "D1C", "window": "In port"}]
 
-    tide_curve = _sparkline([
-        float(t["height_m"]) if t.get("height_m") is not None else (1.0 if t["kind"]=="high" else 0.0)
-        for t in tides
-    ])
+    # Fallbacks
+    sunrise = weather.get("sunrise", "--:--")
+    sunset = weather.get("sunset", "--:--")
+    collected = weather.get("collected_at", "Unknown")
+    temp = weather.get("temperature_c", "--")
+    wind_dir = weather.get("wind_direction", "")
+    wind_kts = weather.get("wind_kts", "--")
+    gusts_kts = weather.get("wind_gusts_kts", "--")
+    rain_desc = weather.get("rain_description", "None")
 
-    lines = [
-        "🌅 BT19 DAILY",
-        f"🕒 Collected {weather.get('collected_at','')}",
-        f"🌄 Sunrise {weather['sunrise']}",
-        f"🌇 Sunset {weather['sunset']}",
-        f"☀️ Daylight {_daylight_bar(weather['sunrise'], weather['sunset'], width=18)}",
-        f"🌡️ Temp {weather['temperature_c']:.1f}°C",
-        f"💨 Wind {wind_str}",
-        f"💨 Gusts {gusts_str}",
-        f"🌧️ Rain {rain_desc}",
-        f"🌊 Tides (Belfast) {tide_curve}",
-    ]
-    lines.extend(
-        f"{'🌊' if t['kind']=='high' else '🏖️'} {t['kind'].title()} {t['time']}"
-        + (f" {float(t['height_m']):.1f}m" if t.get("height_m") is not None else "")
+    # Tide list
+    tide_rows = "".join(
+        f"<li><strong>{t['kind'].title()}</strong> {t['time']}"
+        + (f" · {float(t['height_m']):.1f}m" if t.get("height_m") is not None else "")
+        + "</li>"
         for t in tides
     )
-    if vessel_movements:
-        lines.append("🚢 Movements")
-        lines.extend(
-            f"• {m['window']} {m['name']} ({m['type']}, {m['berth']})"
-            for m in vessel_movements
-        )
-    else:
-        lines.append("🚢 Movements None")
 
-    width=max(len(l) for l in lines)
+    # Vessel list
+    movement_rows = "".join(
+        f"<li><strong>{m['window']}</strong> {m['name']} "
+        f"<span class='muted'>({m['type']}, {m['berth']})</span></li>"
+        for m in vessel_movements
+    ) or "<li>None in the current window</li>"
+
+    # Summary text
+    summary_lines = "<br>".join(escape(line) for line in str(message).splitlines())
+
+    # Build minimal HTML compatible with /static/style.css
+    return f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Daily Numbers</title>
+        <link rel="stylesheet" href="/static/style.css?v=3">
+    </head>
+
+    <body>
+        <div class="container">
+
+            <header>
+                <h1>Daily Numbers</h1>
+                <p class="date">Collected at {escape(collected)}</p>
+            </header>
+
+            <section class="card">
+                <h2>Summary</h2>
+                <p>{summary_lines}</p>
+            </section>
+
+            <section class="card">
+                <h2>Sunrise / Sunset</h2>
+                <p>{escape(sunrise)} → {escape(sunset)}</p>
+            </section>
+
+            <section class="card">
+                <h2>Weather</h2>
+                <p>Temperature: {temp}°C</p>
+                <p>Wind: {wind_kts} kts {wind_dir}</p>
+                <p>Gusts: {gusts_kts} kts</p>
+                <p>Rain: {rain_desc}</p>
+            </section>
+
+            <section class="card">
+                <h2>Tides</h2>
+                <ul>{tide_rows}</ul>
+            </section>
+
+            <section class="card">
+                <h2>Vessel Movements</h2>
+                <ul>{movement_rows}</ul>
+            </section>
+
+        </div>
+    </body>
+    </html>
+    """
+
 
     def boxed(line):
         return f"║ {line:<{width}} ║"
