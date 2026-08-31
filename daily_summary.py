@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import argparse
 import json
 import re
 from datetime import datetime
@@ -20,10 +19,8 @@ _LON = -5.6948
 BELFAST_TIDE_URL = "https://www.tidetimes.org.uk/belfast-tide-times"
 BELFAST_HARBOUR_URL = "https://www.belfast-harbour.co.uk/port-info/harbour-movements/"
 
-# Cruise berths
 _CRUISE_BERTHS = {"d1c", "d1", "d3", "d4"}
 
-# Cardinal directions
 _CARDINAL_DIRS = [
     "N","NNE","NE","ENE","E","ESE","SE","SSE",
     "S","SSW","SW","WSW","W","WNW","NW","NNW",
@@ -34,7 +31,6 @@ _DIRECTION_ARROWS = {
     "S":"↓","SSW":"↙","SW":"↙","WSW":"↙","W":"←","WNW":"↖","NW":"↖","NNW":"↖",
 }
 
-# Weather icons
 _WEATHER_CODE_ICON = {
     0:"clear",1:"partly-cloudy",2:"partly-cloudy",3:"cloudy",
     45:"cloudy",48:"cloudy",
@@ -45,30 +41,6 @@ _WEATHER_CODE_ICON = {
     85:"cloudy",86:"cloudy",
     95:"storm",96:"storm",99:"storm",
 }
-
-# SVG icons
-_SVG_ICONS = {
-    "clear": """<svg ...>...</svg>""",
-    "partly-cloudy": """<svg ...>...</svg>""",
-    "cloudy": """<svg ...>...</svg>""",
-    "rain": """<svg ...>...</svg>""",
-    "storm": """<svg ...>...</svg>""",
-    "daylight": """<svg ...>...</svg>""",
-    "tide": """<svg ...>...</svg>""",
-    "vessel": """<svg ...>...</svg>""",
-    "updated": """<svg ...>...</svg>""",
-}
-
-# Utility functions
-def _degrees_to_cardinal(deg: float) -> str:
-    return _CARDINAL_DIRS[round(deg / 22.5) % 16]
-
-def _rain_description(mm: float) -> str:
-    if mm <= 0: return "None"
-    if mm < 0.5: return "Drizzle"
-    if mm < 2.5: return "Light Rain"
-    if mm < 7.5: return "Moderate Rain"
-    return "Heavy Rain"
 
 class DataError(RuntimeError):
     pass
@@ -97,11 +69,6 @@ def _time_to_minutes(value: str) -> int:
 def _direction_to_arrow(direction: str) -> str:
     return _DIRECTION_ARROWS.get(direction.upper(), "•")
 
-def _weather_icon_name(weather: dict) -> str:
-    if weather.get("raining"):
-        return "rain"
-    return _WEATHER_CODE_ICON.get(int(weather.get("weather_code", 0)), "clear")
-
 def _sparkline(values: list[float]) -> str:
     if not values: return ""
     bars = "▁▂▃▄▅▆▇█"
@@ -120,7 +87,6 @@ def _daylight_bar(sunrise: str, sunset: str, width=24) -> str:
         out.append("█" if start <= minute <= end else "░")
     return "".join(out)
 
-# Harbour parsing
 def _parse_harbour_table_rows(html: str) -> list[list[str]]:
     from html.parser import HTMLParser
     class Parser(HTMLParser):
@@ -150,7 +116,6 @@ def _parse_harbour_table_rows(html: str) -> list[list[str]]:
     p.feed(html)
     return p.rows
 
-# Weather
 def _extract_morning_precip(payload: dict) -> float:
     try:
         times = payload["hourly"]["time"]
@@ -201,7 +166,6 @@ def fetch_weather() -> dict:
         "rain_description": _rain_description(morning),
     }
 
-# Tides
 def _extract_tide_events(html: str):
     patterns = [
         re.compile(r"(?i)\b(high|low)\s+tide\b[^\d]*(\d{1,2}:\d{2}(?:\s*[ap]m)?)(?:[^\d]{0,12}(\d+(?:\.\d+)?)\s*m)?"),
@@ -223,7 +187,6 @@ def fetch_tides():
         raise DataError("Unable to find Belfast tide times")
     return events[:4]
 
-# Cruise ships
 def _extract_cruise_ships(html: str) -> str:
     rows = _parse_harbour_table_rows(html)
     ships=[]
@@ -247,7 +210,6 @@ def _extract_cruise_ships(html: str) -> str:
                 if name and name not in ships:
                     ships.append(name)
     if not ships:
-        # fallback regex
         bpat=re.compile(r"\bD1C\b[^\n<]{0,60}?([A-Z][A-Za-z0-9 .'-]{3,})", re.I)
         for m in bpat.finditer(html):
             ships.append(m.group(1).strip())
@@ -263,7 +225,6 @@ def fetch_cruise_ships():
     except Exception:
         return "None"
 
-# Vessel movements
 def _is_time_in_window(value: str, start: int, end: int) -> bool:
     m=_time_to_minutes(value)
     if start<=end:
@@ -322,7 +283,52 @@ def fetch_vessel_movements(reference_time=None):
     except Exception:
         return []
 
-# Summary builder
+def build_message(weather, tides, cruise_ship=None, vessel_movements=None):
+    rain_desc = weather.get("rain_description", "Yes" if weather.get("raining") else "None")
+    wind_dir = weather.get("wind_direction", "")
+    wind_arrow = _direction_to_arrow(wind_dir)
+    wind_str = f"{weather['wind_kts']:.1f} kts {wind_arrow} {wind_dir}".strip()
+    gusts_str = f"{weather.get('wind_gusts_kts', weather['wind_kts']):.1f} kts"
+
+    vessel_movements = vessel_movements or []
+    if cruise_ship and not vessel_movements and cruise_ship != "None":
+        vessel_movements = [{"name": cruise_ship, "type": "Cruise Ship", "berth": "D1C", "window": "In port"}]
+
+    tide_curve = _sparkline([
+        float(t["height_m"]) if t.get("height_m") is not None else (1.0 if t["kind"]=="high" else 0.0)
+        for t in tides
+    ])
+
+    lines = [
+        "🌅 BT19 DAILY",
+        f"🕒 Collected {weather.get('collected_at','')}",
+        f"🌄 Sunrise {weather['sunrise']}",
+        f"🌇 Sunset {weather['sunset']}",
+        f"☀️ Daylight {_daylight_bar(weather['sunrise'], weather['sunset'], width=18)}",
+        f"🌡️ Temp {weather['temperature_c']:.1f}°C",
+        f"💨 Wind {wind_str}",
+        f"💨 Gusts {gusts_str}",
+        f"🌧️ Rain {rain_desc}",
+        f"🌊 Tides (Belfast) {tide_curve}",
+    ]
+
+    lines.extend(
+        f"{'🌊' if t['kind']=='high' else '🏖️'} {t['kind'].title()} {t['time']}"
+        + (f" {float(t['height_m']):.1f}m" if t.get("height_m") is not None else "")
+        for t in tides
+    )
+
+    if vessel_movements:
+        lines.append("🚢 Movements")
+        lines.extend(
+            f"• {m['window']} {m['name']} ({m['type']}, {m['berth']})"
+            for m in vessel_movements
+        )
+    else:
+        lines.append("🚢 Movements None")
+
+    return "\n".join(lines)
+
 def build_html(message, weather=None, tides=None, cruise=None, vessel_movements=None):
     weather = weather or {}
     tides = tides or []
@@ -359,54 +365,4 @@ def build_html(message, weather=None, tides=None, cruise=None, vessel_movements=
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Daily Numbers</title>
-        <link rel="stylesheet" href="/static/style.css?v=3">
-    </head>
-
-    <body>
-        <div class="container">
-
-            <header>
-                <h1>Daily Numbers</h1>
-                <p class="date">Collected at {escape(collected)}</p>
-            </header>
-
-            <section class="card">
-                <h2>Summary</h2>
-                <p>{summary_lines}</p>
-            </section>
-
-            <section class="card">
-                <h2>Sunrise / Sunset</h2>
-                <p>{escape(sunrise)} → {escape(sunset)}</p>
-            </section>
-
-            <section class="card">
-                <h2>Weather</h2>
-                <p>Temperature: {temp}°C</p>
-                <p>Wind: {wind_kts} kts {wind_dir}</p>
-                <p>Gusts: {gusts_kts} kts</p>
-                <p>Rain: {rain_desc}</p>
-            </section>
-
-            <section class="card">
-                <h2>Tides</h2>
-                <ul>{tide_rows}</ul>
-            </section>
-
-            <section class="card">
-                <h2>Vessel Movements</h2>
-                <ul>{movement_rows}</ul>
-            </section>
-
-        </div>
-    </body>
-    </html>
-    """
-
-
-
-    def boxed(line):
-        return f"║ {line:<{width}} ║"
-
-    divider=f"╠{'═'*(width+2)}╣"
-
+        <link rel="stylesheet" href="/static/style.css?v
