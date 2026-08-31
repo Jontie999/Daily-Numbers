@@ -1,4 +1,4 @@
-from flask import Flask, Response
+from flask import Flask, Response, make_response
 from daily_summary import build_html
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -10,8 +10,7 @@ def staticfiles(filename):
 
 @app.route("/")
 def index():
-    try:
-        html = build_html()
-        return Response(html, mimetype="text/html")
-    except Exception as e:
-        return f"<p>Error generating page: {e}</p>"
+    html = build_html()
+    response = make_response(html)
+    response.headers['Content-Type'] = 'text/html; charset=utf-8'
+    return response
