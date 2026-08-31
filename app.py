@@ -10,7 +10,11 @@ def staticfiles(filename):
 
 @app.route("/")
 def index():
-    html = build_html()
-    response = make_response(html)
-    response.headers['Content-Type'] = 'text/html; charset=utf-8'
-    return response
+    weather = fetch_weather()
+    tides = fetch_tides()
+    cruise = fetch_cruise_ships()
+    vessels = fetch_vessel_movements()
+
+    message = build_message(weather, tides, cruise, vessels)
+
+    return build_html(message, weather, tides, cruise, vessels)
