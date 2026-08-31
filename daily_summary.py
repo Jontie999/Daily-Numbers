@@ -365,4 +365,4 @@ def build_html(message, weather=None, tides=None, cruise=None, vessel_movements=
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Daily Numbers</title>
-        <link rel="stylesheet" href="/static/style.css?v
+        <link rel="stylesheet" href="/static/style.css?v=3">
