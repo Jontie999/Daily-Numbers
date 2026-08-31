@@ -328,7 +328,6 @@ def build_html(message, weather=None, tides=None, cruise=None, vessel_movements=
     tides = tides or []
     vessel_movements = vessel_movements or []
 
-    # Fallbacks
     sunrise = weather.get("sunrise", "--:--")
     sunset = weather.get("sunset", "--:--")
     collected = weather.get("collected_at", "Unknown")
@@ -338,7 +337,6 @@ def build_html(message, weather=None, tides=None, cruise=None, vessel_movements=
     gusts_kts = weather.get("wind_gusts_kts", "--")
     rain_desc = weather.get("rain_description", "None")
 
-    # Tide list
     tide_rows = "".join(
         f"<li><strong>{t['kind'].title()}</strong> {t['time']}"
         + (f" · {float(t['height_m']):.1f}m" if t.get("height_m") is not None else "")
@@ -346,17 +344,14 @@ def build_html(message, weather=None, tides=None, cruise=None, vessel_movements=
         for t in tides
     )
 
-    # Vessel list
     movement_rows = "".join(
         f"<li><strong>{m['window']}</strong> {m['name']} "
         f"<span class='muted'>({m['type']}, {m['berth']})</span></li>"
         for m in vessel_movements
     ) or "<li>None in the current window</li>"
 
-    # Summary text
     summary_lines = "<br>".join(escape(line) for line in str(message).splitlines())
 
-    # Build minimal HTML compatible with /static/style.css
     return f"""
     <!DOCTYPE html>
     <html lang="en">
@@ -407,6 +402,7 @@ def build_html(message, weather=None, tides=None, cruise=None, vessel_movements=
     </body>
     </html>
     """
+
 
 
     def boxed(line):
