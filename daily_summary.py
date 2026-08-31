@@ -8,7 +8,6 @@ import json
 import re
 from datetime import datetime
 from html import escape
-from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -29,17 +28,6 @@ _CARDINAL_DIRS = [
 _DIRECTION_ARROWS = {
     "N":"↑","NNE":"↗","NE":"↗","ENE":"↗","E":"→","ESE":"↘","SE":"↘","SSE":"↘",
     "S":"↓","SSW":"↙","SW":"↙","WSW":"↙","W":"←","WNW":"↖","NW":"↖","NNW":"↖",
-}
-
-_WEATHER_CODE_ICON = {
-    0:"clear",1:"partly-cloudy",2:"partly-cloudy",3:"cloudy",
-    45:"cloudy",48:"cloudy",
-    51:"rain",53:"rain",55:"rain",56:"rain",57:"rain",
-    61:"rain",63:"rain",65:"rain",66:"rain",67:"rain",
-    71:"cloudy",73:"cloudy",75:"cloudy",77:"cloudy",
-    80:"rain",81:"rain",82:"rain",
-    85:"cloudy",86:"cloudy",
-    95:"storm",96:"storm",99:"storm",
 }
 
 class DataError(RuntimeError):
@@ -366,3 +354,29 @@ def build_html(message, weather=None, tides=None, cruise=None, vessel_movements=
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Daily Numbers</title>
         <link rel="stylesheet" href="/static/style.css?v=3">
+    </head>
+
+    <body>
+        <div class="container">
+
+            <header>
+                <h1>Daily Numbers</h1>
+                <p class="date">Collected at {escape(collected)}</p>
+            </header>
+
+            <section class="card">
+                <h2>Summary</h2>
+                <p>{summary_lines}</p>
+            </section>
+
+            <section class="card">
+                <h2>Sunrise / Sunset</h2>
+                <p>{escape(sunrise)} → {escape(sunset)}</p>
+            </section>
+
+            <section class="card">
+                <h2>Weather</h2>
+                <p>Temperature: {temp}°C</p>
+                <p>Wind: {wind_kts} kts {wind_dir}</p>
+                <p>Gusts: {gusts_kts} kts</p>
+                <p>Rain: {
