@@ -344,7 +344,7 @@ def build_html(message, weather=None, tides=None, cruise=None, vessel_movements=
         for m in vessel_movements
     ) or "<li>None in the current window</li>"
 
-       summary_lines = "<br>".join(escape(line) for line in str(message).splitlines())
+    summary_lines = "<br>".join(escape(line) for line in str(message).splitlines())
 
     return f"""
     <!DOCTYPE html>
