@@ -20,3 +20,6 @@ def index():
     message = build_message(weather, tides, cruise, vessels)
 
     return build_html(message, weather, tides, cruise, vessels)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000, debug=True)

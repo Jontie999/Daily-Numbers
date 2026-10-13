@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Daily Dashboard</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background-color: #000000; color: #ffffff; margin: 0; padding: 12px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 380px; box-sizing: border-box; }
+        .header { text-align: center; font-weight: 700; font-size: 1.15rem; color: #ffffff; margin: 15px 0; letter-spacing: -0.3px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .card { background: #1c1c1e; padding: 14px; border-radius: 12px; display: flex; flex-direction: column; }
+        .card-label { font-size: 0.72rem; color: #8e8e93; text-transform: uppercase; font-weight: 600; margin-bottom: 3px; }
+        .card-val { font-size: 1.35rem; font-weight: 700; color: #ffffff; }
+        .section-title { font-size: 0.8rem; color: #8e8e93; text-transform: uppercase; margin: 18px 0 6px 4px; font-weight: 600; }
+        .list-block { background: #1c1c1e; border-radius: 12px; padding: 2px 14px; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; font-size: 0.92rem; border-bottom: 0.5px solid #2c2c2e; }
+        .list-item:last-child { border-bottom: none; }
+        .muted { color: #8e8e93; }
+        .highlight { color: #0a84ff; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">🌅 BT19 MORNING STATUS</div>
+        <div class="grid">
+            <div class="card">
+                <span class="card-label">🌅 Sunrise</span>
+                <span class="card-val">{{ sunrise }}</span>
+            </div>
+            <div class="card">
+                <span class="card-label">🌡️ Air Temp</span>
+                <span class="card-val">{{ temperature_c }}°C</span>
+            </div>
+        </div>
+        <div class="card" style="margin-bottom: 12px;">
+            <span class="card-label">💨 Wind Profile</span>
+            <span class="card-val">{{ wind_kts }} kts <span class="highlight">{{ arrow }} {{ wind_direction }}</span></span>
+            <span class="muted" style="font-size:0.82rem; margin-top:3px;">Peak gusts up to {{ wind_gusts_kts }} kts</span>
+        </div>
+        <div class="card">
+            <span class="card-label">🌧️ Rain Gauge</span>
+            <span class="card-val">{{ rain_status }}</span>
+            <span class="muted" style="font-size:0.82rem; margin-top:3px;">{{ rain_description }}</span>
+        </div>
+        <div class="section-title">🌊 Belfast Tides</div>
+        <div class="list-block">
+            {{ tide_rows | safe }}
+        </div>
+        <div class="section-title">🚢 Harbour Movements</div>
+        <div class="list-block">
+            <div class="list-item"><strong>Cruise Ships:</strong> <span>{{ cruise }}</span></div>
+            {{ ship_rows | safe }}
+        </div>
+    </div>
+</body>
+</html>
